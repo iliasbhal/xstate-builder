@@ -10,9 +10,34 @@ A boilerplate for TypeScript + Jest
 - Yarn
 
 
-## Usage
+## Installation
 
 Clone this repository and run `yarn install` in the project root.
+
+
+## Usage
+
+### Build
+
+```
+yarn build
+```
+
+Outputed into `lib/`.
+
+### Test
+
+```
+yarn test
+```
+
+### Coverage
+
+```
+yarn coverage
+```
+
+Open `coverage/lcov-report/index.html` in a browser.
 
 
 ## How it works
