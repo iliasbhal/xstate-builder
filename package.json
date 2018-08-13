@@ -6,6 +6,9 @@
   "repository": "https://github.com/utatatata/ts-jest-boilerplate.git",
   "author": "utakuma <utatatata.kuma@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=8.2.1"
+  },
   "scripts": {
     "lint-check": "tslint-config-prettier-check ./tslint.json",
     "build": "rimraf lib && tsc",

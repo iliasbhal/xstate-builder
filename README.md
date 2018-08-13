@@ -6,7 +6,7 @@ A boilerplate for TypeScript + Jest
 
 ## Requirement
 
-- Node v10.3.0 or later
+- Node v8.2.1 or later
 - Yarn
 
 

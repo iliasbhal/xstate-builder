@@ -1,4 +1,8 @@
 {
-  "*.ts": ["prettier --parser typescript --write", "tslint --fix", "git add"],
-  "*.{js,json}": ["prettier --write", "git add"]
+  "*.{ts,tsx}": [
+    "prettier --parser typescript --write",
+    "tslint --fix",
+    "git add"
+  ],
+  "*.{js,jsx,json}": ["prettier --write", "git add"]
 }
