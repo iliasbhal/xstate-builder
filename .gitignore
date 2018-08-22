@@ -73,4 +73,4 @@ typings/
 .serverless
 
 # Typescript outDir
-/lib/
+/dist/

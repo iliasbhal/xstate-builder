@@ -23,7 +23,7 @@ Clone this repository and run `yarn install` in the project root.
 yarn build
 ```
 
-Outputed into `lib/`.
+Outputed into `dist/`.
 
 ### Test
 
@@ -44,7 +44,7 @@ Open `coverage/lcov-report/index.html` in a browser.
 
 ### TypeScript
 
-`yarn build` transpiles the source codes from `src/` to `lib/`.
+`yarn build` transpiles the source codes from `src/` to `dist/`.
 
 See `tsconfig.json`.
 
@@ -109,3 +109,4 @@ Adding these settings for VSCode.
 If `editor.formatOnSave` is true and prettier is installed either local or global, the source code is automatically formatted on save.
 
 `[javascript]` means those settings is valid only when the editing file type is JavaScript.
+
