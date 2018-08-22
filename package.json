@@ -11,7 +11,9 @@
   },
   "scripts": {
     "lint-check": "tslint-config-prettier-check ./tslint.json",
-    "build": "rimraf lib && tsc",
+    "clean": "rimraf lib",
+    "prebuild": "yarn clean",
+    "build": "tsc",
     "test": "jest",
     "coverage": "jest --coverage"
   },
