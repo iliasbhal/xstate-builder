@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+const lib = require('../lib/index')
+
+process.stdout.write(lib.greet('TS Jest Boilerplate') + '\n')

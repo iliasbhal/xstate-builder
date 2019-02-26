@@ -1,3 +1,4 @@
-import foo from './foo'
+import sub from './sub'
 
-process.stdout.write(foo.hello('utakuma'))
+export const greet = (name: string): string => `Hello, ${sub.exaggerate(name, 8)}`
+

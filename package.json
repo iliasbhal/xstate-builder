@@ -1,40 +1,48 @@
 {
   "name": "ts-jest-boilerplate",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A boilerplate for TypeScript + Jest",
-  "main": "index.js",
-  "repository": "https://github.com/utatatata/ts-jest-boilerplate.git",
-  "author": "utakuma <utatatata.kuma@gmail.com>",
+  "repository": "https://github.com/utatatata/AKAsha.git",
   "license": "MIT",
-  "engines": {
-    "node": ">=8.2.1"
+  "author": "utakuma <utatatata.kuma@gmail.com>",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "aka": "./bin/aka.js"
   },
   "scripts": {
-    "lint-check": "tslint-config-prettier-check ./tslint.json",
-    "clean": "rimraf dist",
-    "prebuild": "yarn clean",
-    "build": "tsc",
-    "test": "jest",
-    "coverage": "jest --coverage"
+    "build": "tsc -b",
+    "clean": "rimraf lib",
+    "coverage": "jest --coverage",
+    "fix": "concurrently 'yarn fix:packageJson' 'yarn fix:md' 'yarn fix:js' 'yarn fix:ts'",
+    "fix:js": "prettier --write './**/*.{js,json}'",
+    "fix:md": "prettier --write './**/*.md'",
+    "fix:packageJson": "sort-package-json package.json && prettier --write package.json",
+    "fix:ts": "prettier --parser typescript --write './**/*.ts' && tslint --fix --project tsconfig.lint.json",
+    "start": "tsc -b -w",
+    "test": "jest"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "dependencies": {
+    "commander": "^2.19.0",
+    "inquirer": "^6.2.2"
   },
   "devDependencies": {
-    "@types/jest": "^23.3.1",
-    "@types/node": "^10.5.8",
-    "husky": "^1.0.0-rc.13",
-    "jest": "^23.5.0",
-    "lint-staged": "^7.2.0",
-    "prettier": "^1.14.2",
-    "rimraf": "^2.6.2",
-    "ts-jest": "^23.1.3",
-    "ts-loader": "^4.4.2",
-    "tslint": "^5.11.0",
-    "tslint-config-prettier": "^1.14.0",
-    "tslint-plugin-prettier": "^1.3.0",
-    "typescript": "^3.0.1"
+    "@types/jest": "^24.0.6",
+    "@types/node": "^11.9.5",
+    "concurrently": "^4.1.0",
+    "husky": "^1.3.1",
+    "jest": "^24.1.0",
+    "lint-staged": "^8.1.4",
+    "prettier": "^1.16.4",
+    "rimraf": "^2.6.3",
+    "sort-package-json": "^1.19.0",
+    "ts-jest": "^24.0.0",
+    "tslint": "^5.13.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "typescript": "^3.3.3333"
+  },
+  "engines": {
+    "node": ">=10"
   }
 }

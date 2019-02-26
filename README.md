@@ -1,19 +1,15 @@
-ts-jest-boilerplate
-===================
+# ts-jest-boilerplate
 
 A boilerplate for TypeScript + Jest
 
-
 ## Requirement
 
-- Node v8.2.1 or later
+- Node v10.x.x or later
 - Yarn
-
 
 ## Installation
 
 Clone this repository and run `yarn install` in the project root.
-
 
 ## Usage
 
@@ -23,7 +19,7 @@ Clone this repository and run `yarn install` in the project root.
 yarn build
 ```
 
-Outputed into `dist/`.
+Outputed into `lib/`.
 
 ### Test
 
@@ -39,12 +35,11 @@ yarn coverage
 
 Open `coverage/lcov-report/index.html` in a browser.
 
-
 ## How it works
 
 ### TypeScript
 
-`yarn build` transpiles the source codes from `src/` to `dist/`.
+`yarn build` transpiles the source codes from `src/` to `lib/`.
 
 See `tsconfig.json`.
 
@@ -80,7 +75,6 @@ Jest is a test runner.
 
 ts-jest let Jest run `.ts` files.
 
-
 ## Editor configuration
 
 ### VSCode
@@ -108,5 +102,4 @@ Adding these settings for VSCode.
 
 If `editor.formatOnSave` is true and prettier is installed either local or global, the source code is automatically formatted on save.
 
-`[javascript]` means those settings is valid only when the editing file type is JavaScript.
-
+`[javascript]` means those settings is valid only when the edited file type is JavaScript.

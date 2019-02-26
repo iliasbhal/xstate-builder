@@ -1,0 +1,24 @@
+{
+  "compileOptions": {
+    "composite": true,
+    "declarationMap": true,
+    "module": "commonjs",
+    "target": "es2018",
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": false,
+    "importHelpers": true,
+    "noUnusedLocals": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "removeComments": "true",
+    "types": ["node"],
+    "lib": ["es2018"]
+  }
+}
