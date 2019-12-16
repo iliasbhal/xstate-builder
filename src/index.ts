@@ -82,15 +82,7 @@ class BaseMachineConfigBuilder {
 }
 
 class TransitionBuilder extends BaseMachineConfigBuilder {
-  public if = this.cond;
-  public elseif = this.cond;
-  public case = this.cond;
-  public guard = this.cond;
-  public do = this.action;
-
-  public redirect = this.target;
-  public default = this.target;
-  public cond(condName: string) {
+  public cond = (condName: string) => {
     const targetObject = {
       cond: condName,
     };
@@ -102,18 +94,18 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
     return this.getChainMethods();
   }
 
-  public stop = () => this.action([]); // forbidden transition;
-  public doNothing = () => this.action([]); // forbidden transition;
-  public stopPopagation = () => this.action([]);
-  public send = (actionName: string, options: any) => this.action(actions.send(actionName, options));
-  public respond = (actionName: string, options: any) => this.action(actions.respond(actionName, options));
-  public raise = (actionName: string) => this.action(actions.raise(actionName));
-  public forwardTo = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
-  public forward = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
-  public escalate = (actionName: string) => this.action(actions.escalate(actionName));
-  public assign = (assignConfig: any) => this.action(actions.assign(assignConfig));
-  public error = (actionName: string) => this.action(actions.escalate(actionName));
-  public log = (expr?: any, label?: any) => this.action(actions.log(expr, label));
+  public in = (condName: string) => {
+    const targetObject = {
+      in: condName,
+    };
+
+    const currentTransitionConfig = this.getConfig();
+    const nextTransitionConfig = this.updateTransition('in', currentTransitionConfig, targetObject);
+    this.setConfig(nextTransitionConfig);
+
+    return this.getChainMethods();
+  }
+
   public action(actionConfig: any) {
     const isFunction = typeof actionConfig === 'function';
     const targetObject = {
@@ -139,6 +131,29 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
 
     return this.getChainMethods();
   }
+
+  // aliases
+  public if = this.cond;
+  public elseif = this.cond;
+  public case = this.cond;
+  public guard = this.cond;
+  public do = this.action;
+  public redirect = this.target;
+  public default = this.target;
+
+  // shorthand methods
+  public stop = () => this.action([]); // forbidden transition;
+  public doNothing = () => this.action([]); // forbidden transition;
+  public stopPopagation = () => this.action([]);
+  public send = (actionName: string, options: any) => this.action(actions.send(actionName, options));
+  public respond = (actionName: string, options: any) => this.action(actions.respond(actionName, options));
+  public raise = (actionName: string) => this.action(actions.raise(actionName));
+  public forwardTo = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
+  public forward = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
+  public escalate = (actionName: string) => this.action(actions.escalate(actionName));
+  public assign = (assignConfig: any) => this.action(actions.assign(assignConfig));
+  public error = (actionName: string) => this.action(actions.escalate(actionName));
+  public log = (expr?: any, label?: any) => this.action(actions.log(expr, label));
 
   public updateTransition(key:string, currentTranstionConfig, targetObject) {
     let transitionConfig = currentTranstionConfig;
