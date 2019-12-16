@@ -1,5 +1,5 @@
 # ⚠️ Under Active Developement ⚠️
-( This is a "dirty" repository for a future PR on davidkpiano/xstate, I'm working on this repo, and once every will be done, I'll create archive this repo and create the PR )
+( This is a "dirty" repository for a future PR on davidkpiano/xstate, I'm working on this repo, and once every will be done, I'll archive this repo and create the PR )
 
 🙏 **Please, Sumbmit your x-state machine configurations in the issue**
 
