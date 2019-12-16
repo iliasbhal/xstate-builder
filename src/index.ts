@@ -16,14 +16,14 @@ export default class Machine {
 }
 
 class BaseMachineConfigBuilder {
-  public extend: any;
+  public parent: any;
   public getConfig: any;
   public setConfig: any;
   public onChange: any;
 
-  constructor(attachConfig?: { extend, getConfig, setConfig }) {
+  constructor(attachConfig?: { parent, getConfig, setConfig }) {
     if (attachConfig) {
-      this.extend = attachConfig.extend;
+      this.parent = attachConfig.parent;
       this.getConfig = attachConfig.getConfig;
       this.setConfig = attachConfig.setConfig;
     }
@@ -44,7 +44,7 @@ class BaseMachineConfigBuilder {
   public getChainMethods() {
     return new Proxy(this, {
       get(target, prop, receiver) {
-        let nextPrototype = target.extend;
+        let nextPrototype = target.parent;
         let nextMethod = target[prop];
 
         while (!nextMethod && !!nextPrototype) {
@@ -216,7 +216,7 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
 
   public createScopedTransitionBuilder(scopeName: string) {
     const transitionBuilder = (eventName: string) => new TransitionBuilder({
-      extend: this,
+      parent: this,
       getConfig: () => this.getConfig()[eventName],
       setConfig: value => this.withConfig({ [eventName]: value }),
     });
@@ -251,7 +251,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
 
     let childStateConfig = {};
     const childStateBuilder = new StateBuilder(null, {
-      extend: this,
+      parent: this,
       getConfig: () => childStateConfig,
       setConfig: (value) => { childStateConfig = value; },
     });
@@ -284,7 +284,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
     const currentConfig = this.getConfig() || {};
 
     const transitionBuilder = new TransitionBuilder({
-      extend: this.getChainMethods(),
+      parent: this,
       getConfig: () => {
         if (!currentConfig.on) {
           currentConfig.on = {};
@@ -325,7 +325,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
     }
 
     const stateBuilder = new StateBuilder(stateName, {
-      extend: this.getChainMethods(),
+      parent: this.getChainMethods(),
       getConfig: () => currentConfig.states[stateName],
       setConfig: newState => currentConfig.states[stateName] = newState,
     });
@@ -340,7 +340,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
     const currentConfig = this.getConfig();
 
     const invokeBuilder = new InvokeBuilder({
-      extend: this,
+      parent: this,
       getConfig: () => currentConfig.invoke,
       setConfig: newData => currentConfig.invoke = newData,
     });
