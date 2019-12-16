@@ -5,11 +5,11 @@ import Machine from './index';
 
 describe('test state machine', () => {
 
-  // TODO: transiant state should be able to defined
-  // mutiple target and mutiple comditons
-
   // TODO: state names should be minifiable.
-  // TDODO implement assign action
+  // TODO: add state.addChild(alreadyDefinedNode) to move a node from where it is defined
+  //       to the node we called addChild on.
+  // TODO add machine.defineNode .defineTransition etc etc
+  //      and machine.useNode useTransition etc etc
 
   it('should be able to create a transiant state', () => {
     const machineConfig = Machine.Builder((state) => {

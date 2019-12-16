@@ -18,7 +18,9 @@
     "start": "tsc -b -w",
     "test": "jest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "xstate": "^4.7.3"
+  },
   "devDependencies": {
     "@types/jest": "^24.0.23",
     "@types/node": "^11.9.5",
@@ -34,8 +36,7 @@
     "tslint": "^5.13.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1",
-    "typescript": "^3.3.3333",
-    "xstate": "^4.7.3"
+    "typescript": "^3.3.3333"
   },
   "engines": {
     "node": ">=10"
