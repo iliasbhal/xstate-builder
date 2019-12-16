@@ -1,105 +1,138 @@
-# ts-jest-boilerplate
+# ⚠️ Under Active Developement ⚠️
 
-A boilerplate for TypeScript + Jest
+🙏 **Please, Sumbmit your x-state machine configurations in the issue**
 
-## Requirement
+🤔 Why ? For several reasons:
 
-- Node v10.x.x or later
-- Yarn
+I will create a test case for them
+And try to recreate them using the xstate-builder
 
-## Installation
+Because I need to add as much test as possible for the V1.
 
-Clone this repository and run `yarn install` in the project root.
+Detect improvement that have to be done to the builder API.
 
-## Usage
+## What has been Done ✅
 
-### Build
+- [x] support for custom actions
+- [x] support for activities
+- [x] automatic intial state definition
+- [x] support for compound states
+- [x] support for parallel state
+- [x] ability to use xstate object
+- [ ] ... a lot of other things
 
-```
-yarn build
-```
+## Examples
 
-Outputed into `lib/`.
+Example: Sequence Pattern:
 
-### Test
+```ts
+const machineConfig = Machine.Builder(state => {
+  const node1 = state.atomic('node-1')
+  const node2 = state.atomic('node-2')
+  const node3 = state.atomic('node-3')
 
-```
-yarn test
-```
+  ;[node1, node2, node3].forEach((state, index, nodes) => {
+    state.on('NEXT').target(nodes[index + 1] || nodes[0])
+  })
+})
 
-### Coverage
+// SAME AS:
 
-```
-yarn coverage
-```
-
-Open `coverage/lcov-report/index.html` in a browser.
-
-## How it works
-
-### TypeScript
-
-`yarn build` transpiles the source codes from `src/` to `lib/`.
-
-See `tsconfig.json`.
-
-### husky & lint-staged
-
-husky provides hooks for git, e.g. pre-commit, pre-push.
-
-lint-staged gives the git staging files to any command.
-
-You can format and lint the source codes with them before they are commited.
-
-See `package.json` and `.lintstagedrc.json`.
-
-### Prettier & TSLint
-
-Pretiter is a code formatter.
-
-By default, Prettier uses Babylon to parse the source codes but the TypeScript compiler can be also used.
-
-TSLint configurations cover Prettier ones, so they are conflicted.
-
-eslint-config-prettier invalidates the TSLint configurations conflicted with Prettier.
-
-eslint-plugin-prettier let you use Prettier on TSLint.
-
-See `.prettierrc` and `tslint.json`.
-
-In [Editor configuration](#editor-configuration) you can learn how to use automatic formatting and linting in each editors.
-
-### Jest(ts-jest)
-
-Jest is a test runner.
-
-ts-jest let Jest run `.ts` files.
-
-## Editor configuration
-
-### VSCode
-
-Install the extensions below.
-
-- prettier-vscode
-- tslint
-
-Adding these settings for VSCode.
-
-```
-{
-    "[javascript]": {
-        "editor.formatOnSave": true
+const machineConfig = {
+  initial: 'node-1',
+  states: {
+    'node-1': {
+      type: 'atomic',
+      on: {
+        NEXT: 'node-2',
+      },
     },
-    "[json]": {
-        "editor.formatOnSave": true
+    'node-2': {
+      type: 'atomic',
+      on: {
+        NEXT: 'node-3',
+      },
     },
-    "[typescript]": {
-        "editor.formatOnSave": true
-    }
+    'node-3': {
+      type: 'atomic',
+      on: {
+        NEXT: 'node-1',
+      },
+    },
+  },
 }
 ```
 
-If `editor.formatOnSave` is true and prettier is installed either local or global, the source code is automatically formatted on save.
+Example 2: Simple State With Event Handler
 
-`[javascript]` means those settings is valid only when the edited file type is JavaScript.
+```ts
+const machineConfig = Machine.Builder(state => {
+  state
+    .atomic('atomic-node')
+    .on('MOUSE_DOWN')
+    .cond('GUARD')
+    .action('ACTION')
+    .on('MOUSE_UP')
+    .cond('GUARD2')
+    .action('ACTION2')
+})
+
+// SAME AS:
+
+const machineConfig = {
+  initial: 'atomic-node',
+  states: {
+    'atomic-node': {
+      type: 'atomic',
+      on: {
+        MOUSE_DOWN: {
+          cond: 'GUARD',
+          action: 'ACTION',
+        },
+        MOUSE_UP: {
+          cond: 'GUARD2',
+          action: 'ACTION2',
+        },
+      },
+    },
+  },
+}
+```
+
+Example 3: Transiant State
+
+```ts
+const machineConfig = Machine.Builder(state => {
+  state
+    .switch('transiant-example')
+    .case('GUARD1')
+    .target('TARGET1')
+    .case('GUARD1')
+    .target('TARGET2')
+    .default('TARGET3')
+})
+
+const machineConfig = {
+  initial: 'transiant-example',
+  states: {
+    'transiant-example': {
+      type: 'atomic',
+      on: {
+        '': [
+          {
+            cond: 'GUARD1',
+            target: 'TARGET1',
+          },
+          {
+            cond: 'GUARD1',
+            target: 'TARGET2',
+          },
+          {
+            target: 'TARGET3',
+          },
+        ],
+      },
+    },
+  },
+}
+```

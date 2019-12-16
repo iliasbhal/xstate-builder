@@ -1,15 +1,11 @@
 {
-  "name": "ts-jest-boilerplate",
-  "version": "1.0.0",
-  "description": "A boilerplate for TypeScript + Jest",
-  "repository": "https://github.com/utatatata/ts-jest-boilerplate.git",
+  "name": "xstate-builder",
+  "version": "0.0.2",
+  "description": "Use A Fluent Builder To Generate Your X-State Configuration",
   "license": "MIT",
-  "author": "utakuma <utatatata.kuma@gmail.com>",
+  "author": "ilias <ilias.bhal@gmail.com>",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "bin": {
-    "ts-jest-boilerplate": "./bin/ts-jest-boilerplate"
-  },
   "scripts": {
     "build": "tsc -b",
     "clean": "rimraf lib",
@@ -22,9 +18,11 @@
     "start": "tsc -b -w",
     "test": "jest"
   },
+  "dependencies": {},
   "devDependencies": {
-    "@types/jest": "^24.0.6",
+    "@types/jest": "^24.0.23",
     "@types/node": "^11.9.5",
+    "chai": "^4.2.0",
     "concurrently": "^4.1.0",
     "husky": "^1.3.1",
     "jest": "^24.1.0",
@@ -36,7 +34,8 @@
     "tslint": "^5.13.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.3.3333",
+    "xstate": "^4.7.3"
   },
   "engines": {
     "node": ">=10"
