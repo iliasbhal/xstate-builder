@@ -27,11 +27,11 @@ Example: Sequence Pattern:
 
 ```ts
 const machineConfig = Machine.Builder(state => {
-  const node1 = state.atomic('node-1')
-  const node2 = state.atomic('node-2')
-  const node3 = state.atomic('node-3')
+  const node1 = state.atomic('node-1');
+  const node2 = state.atomic('node-2');
+  const node3 = state.atomic('node-3');
 
-  ;[node1, node2, node3].forEach((state, index, nodes) => {
+  [node1, node2, node3].forEach((state, index, nodes) => {
     state.on('NEXT').target(nodes[index + 1] || nodes[0])
   })
 })
@@ -67,14 +67,11 @@ Example 2: Simple State With Event Handler
 
 ```ts
 const machineConfig = Machine.Builder(state => {
-  state
-    .atomic('atomic-node')
+  state.atomic('atomic-node')
     .on('MOUSE_DOWN')
-    .cond('GUARD')
-    .action('ACTION')
+        .cond('GUARD').action('ACTION')
     .on('MOUSE_UP')
-    .cond('GUARD2')
-    .action('ACTION2')
+        .cond('GUARD2').action('ACTION2')
 })
 
 // SAME AS:
@@ -103,12 +100,9 @@ Example 3: Transiant State
 
 ```ts
 const machineConfig = Machine.Builder(state => {
-  state
-    .switch('transiant-example')
-    .case('GUARD1')
-    .target('TARGET1')
-    .case('GUARD1')
-    .target('TARGET2')
+  state.switch('transiant-example')
+    .case('GUARD1').target('TARGET1')
+    .case('GUARD1').target('TARGET2')
     .default('TARGET3')
 })
 
