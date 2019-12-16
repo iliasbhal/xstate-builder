@@ -155,7 +155,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   public error = (actionName: string) => this.action(actions.escalate(actionName));
   public log = (expr?: any, label?: any) => this.action(actions.log(expr, label));
 
-  public updateTransition(key:string, currentTranstionConfig, targetObject) {
+  private updateTransition(key:string, currentTranstionConfig, targetObject) {
     let transitionConfig = currentTranstionConfig;
 
     const isUndefined = typeof currentTranstionConfig === 'undefined';
@@ -214,7 +214,7 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
   public onException = this.onDone;
   public catch = this.onDone;
 
-  public createScopedTransitionBuilder(scopeName: string) {
+  private createScopedTransitionBuilder(scopeName: string) {
     const transitionBuilder = (eventName: string) => new TransitionBuilder({
       parent: this,
       getConfig: () => this.getConfig()[eventName],
@@ -237,11 +237,6 @@ class StateBuilder extends BaseMachineConfigBuilder {
     this.id = id;
   }
 
-  public onConfigChange = () => {
-
-  }
-  // data = this.context;
-
   public describe = (describeFn: any) => {
     const currentConfig = this.getConfig();
     const isParallel = currentConfig.type === 'parallel';
@@ -258,10 +253,9 @@ class StateBuilder extends BaseMachineConfigBuilder {
 
     describeFn(childStateBuilder);
 
-    this.setConfig(Object.assign({},
-      this.getConfig(),
-      { states: childStateConfig['states'] }
-    ));
+    this.assignConfig({ 
+      states: childStateConfig['states'] 
+    });
   }
 
   public context = (contextObj: any) => this.onStateProperty('context', contextObj);
@@ -349,6 +343,8 @@ class StateBuilder extends BaseMachineConfigBuilder {
     return invokeBuilder;
   }
 
+
+  public data = this.context;
   public children = this.describe;
 
   public when = this.on;

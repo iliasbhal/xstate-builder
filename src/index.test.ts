@@ -10,6 +10,7 @@ describe('test state machine', () => {
   //       to the node we called addChild on.
   // TODO add machine.defineNode .defineTransition etc etc
   //      and machine.useNode useTransition etc etc
+  //      and .use(xstateConfig) of every builder to implement the builder
 
   it('should be able to create a transiant state', () => {
     const machineConfig = Machine.Builder((state) => {
