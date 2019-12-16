@@ -6,11 +6,112 @@ import Machine from './index';
 describe('test state machine', () => {
 
   // TODO: state names should be minifiable.
-  // TODO: add state.addChild(alreadyDefinedNode) to move a node from where it is defined
-  //       to the node we called addChild on.
   // TODO add machine.defineNode .defineTransition etc etc
   //      and machine.useNode useTransition etc etc
-  //      and .use(xstateConfig) of every builder to implement the builder
+  
+  // console.log(JSON.stringify(machineConfig, null, 2));
+
+  it('should able to add children using .children', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      const parentNode = machine.atomic('test-node');
+      const childNode1 = machine.atomic('test-node-2');
+      const childNode2 = machine.atomic('test-node-3');
+      
+      parentNode.children([childNode1, childNode2])
+    });
+
+    expect(machineConfig).to.deep.equal({
+      "initial": "test-node",
+      "states": {
+        "test-node": {
+          "type": "compound",
+          "states": {
+            "test-node-2": {
+              "type": "atomic"
+            },
+            "test-node-3": {
+              "type": "atomic"
+            }
+          }
+        }
+      }
+    });
+  })
+
+  it('should have ability to add already defined node to child states', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      const parentNode = machine.atomic('test-node');
+      const childNode = machine.atomic('test-node-child');
+
+      parentNode.addChildState(childNode);
+      
+      // can event change state after and still works
+      childNode.on('CLICK').do('DO')
+
+      // can still add child using children builder
+      parentNode.children((child) => {
+        const childParent = child.atomic('2nd-child');
+        const other = child.atomic('2nd-child-child');
+        childParent.addChildState(other);
+      })
+    });
+
+    expect(machineConfig).to.deep.equal({
+      "initial": "test-node",
+      "states": {
+        "test-node": {
+          "type": "compound",
+          "states": {
+            "test-node-child": {
+              "type": "atomic",
+              "on": {
+                "CLICK": {
+                  "action": "DO"
+                }
+              }
+            },
+            "2nd-child": {
+              "type": "compound",
+              "states": {
+                "2nd-child-child": {
+                  "type": "atomic"
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  })
+
+  it('should use directly a xstate configuration object', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      machine.atomic('test-node')
+        .assignConfig({
+          "on": {
+            "": {
+                "cond": "GUARD1",
+                "action": "ACTION"
+            },
+          }
+        })
+    });
+
+    expect(machineConfig).to.deep.equal({
+      "initial": "test-node",
+      "states": {
+        "test-node": {
+          "type": "atomic",
+          "on": {
+            "": {
+              "cond": "GUARD1",
+              "action": "ACTION"
+            }
+          }
+        }
+      }
+    });
+  });
 
   it('should be able to create a transiant state', () => {
     const machineConfig = Machine.Builder((state) => {

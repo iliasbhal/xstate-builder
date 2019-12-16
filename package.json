@@ -16,7 +16,8 @@
     "fix:packageJson": "sort-package-json package.json && prettier --write package.json",
     "fix:ts": "prettier --ignore-path .gitignore --parser typescript --write './**/*.ts' && tslint --fix --project tsconfig.lint.json",
     "start": "tsc -b -w",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "xstate": "^4.7.3"

@@ -1,19 +1,6 @@
 import { actions } from 'xstate';
 
 // tslint:disable
-export default class Machine {
-  public static Builder(builderFn) {
-    let data = {};
-    const state = new StateBuilder('machine', {
-      getConfig: () => data,
-      setConfig: newValue => data = newValue,
-    });
-
-    builderFn(state);
-
-    return data;
-  }
-}
 
 class BaseMachineConfigBuilder {
   public parent: any;
@@ -22,6 +9,10 @@ class BaseMachineConfigBuilder {
   public onChange: any;
 
   constructor(attachConfig?: { parent, getConfig, setConfig }) {
+    this.reconstruct(attachConfig);
+  }
+
+  reconstruct(attachConfig?: { parent, getConfig, setConfig }){
     if (attachConfig) {
       this.parent = attachConfig.parent;
       this.getConfig = attachConfig.getConfig;
@@ -35,10 +26,14 @@ class BaseMachineConfigBuilder {
     }
   }
 
-  public withConfig(configObject) {
-    const currentConfig = this.getConfig();
-    const newConfig = Object.assign({}, currentConfig, configObject);
-    this.setConfig(newConfig);
+  public assignKeyConfig(key, configObj) {
+    if (this.setConfig && this.getConfig) {
+      const currentConfig = this.getConfig();
+      const assignedKeydConfig = Object.assign({} , currentConfig[key], configObj)
+      currentConfig[key] = assignedKeydConfig;
+
+      this.assignConfig(currentConfig)
+    }
   }
 
   public getChainMethods() {
@@ -61,7 +56,7 @@ class BaseMachineConfigBuilder {
     const assignObjectConfig = (argAssignObj) => {
       const isObject = typeof argAssignObj === 'object';
       if (isObject) {
-        this.withConfig({ ...argAssignObj });
+        this.assignConfig({ ...argAssignObj });
       }
     };
 
@@ -218,7 +213,7 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
     const transitionBuilder = (eventName: string) => new TransitionBuilder({
       parent: this,
       getConfig: () => this.getConfig()[eventName],
-      setConfig: value => this.withConfig({ [eventName]: value }),
+      setConfig: value => this.assignConfig({ [eventName]: value }),
     });
 
     return (transitionConfig) => {
@@ -238,9 +233,25 @@ class StateBuilder extends BaseMachineConfigBuilder {
   }
 
   public describe = (describeFn: any) => {
+    const isState = describeFn instanceof StateBuilder;
+    const isArray = Array.isArray(describeFn);
+    
+    if (isState) {
+      this.addChildState(describeFn);
+      return this;
+    } 
+    
+    if (isArray) {
+      describeFn.forEach((stateNode) => {
+        this.addChildState(stateNode);
+      })
+      return this;
+    }
+
+
     const currentConfig = this.getConfig();
     const isParallel = currentConfig.type === 'parallel';
-    this.setConfig({
+    this.assignConfig({
       type: !isParallel ? 'compound' : undefined,
     });
 
@@ -253,9 +264,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
 
     describeFn(childStateBuilder);
 
-    this.assignConfig({ 
-      states: childStateConfig['states'] 
-    });
+    this.assignKeyConfig('states', childStateConfig['states']);
   }
 
   public context = (contextObj: any) => this.onStateProperty('context', contextObj);
@@ -321,7 +330,13 @@ class StateBuilder extends BaseMachineConfigBuilder {
     const stateBuilder = new StateBuilder(stateName, {
       parent: this.getChainMethods(),
       getConfig: () => currentConfig.states[stateName],
-      setConfig: newState => currentConfig.states[stateName] = newState,
+      setConfig: newState => {
+        if (!newState) {
+          delete currentConfig.states[stateName];
+        } else {
+          currentConfig.states[stateName] = newState;
+        }
+      }
     });
 
     stateBuilder.handleCall(...args);
@@ -343,6 +358,34 @@ class StateBuilder extends BaseMachineConfigBuilder {
     return invokeBuilder;
   }
 
+  public addChildState(stateNode: StateBuilder) {
+    const thisConfig = this.getConfig();
+    const childConfig = stateNode.getConfig();
+    stateNode.setConfig(undefined)
+
+    const shouldBeCompound = thisConfig['type'] !== 'parallel'
+    const newAssignConfig = { 
+      states: { 
+        [stateNode.id]: childConfig 
+      }
+    };
+
+    stateNode.reconstruct({
+      parent: this,
+      getConfig: () => newAssignConfig.states[stateNode.id],
+      setConfig: (newState) => {
+        if (!newState) {
+          delete newAssignConfig.states[stateNode.id];
+        } else {
+          newAssignConfig.states[stateNode.id] = newState;
+        }
+      }
+    })
+
+    this.assignConfig({ 'type': shouldBeCompound ? 'compound' : thisConfig['type'] });
+    this.assignKeyConfig('states', newAssignConfig.states);
+  }
+
 
   public data = this.context;
   public children = this.describe;
@@ -359,7 +402,30 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public parallel = (stateName: string, ...args) => this.node(stateName, { type: 'parallel' }, ...args);
   public final = (stateName: string, ...args) => this.node(stateName, { type: 'final' }, ...args);
   public history = (stateName: string, ...args) => this.node(stateName, { type: 'history' }, ...args);
-  public transient = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('');
-  public switch = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('');
-  public choice = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('');
+  public transient = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
+  public switch = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
+  public choice = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
 }
+
+class MachineBuilder extends StateBuilder {
+  createTransition() {
+
+  }
+
+
+}
+
+export default class Machine {
+  public static Builder(builderFn) {
+    let data = {};
+    const state = new StateBuilder('machine', {
+      getConfig: () => data,
+      setConfig: newValue => data = newValue,
+    });
+
+    builderFn(state);
+
+    return data;
+  }
+}
+
