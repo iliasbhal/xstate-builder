@@ -116,7 +116,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   public target(target: any, type: { internal?: boolean, external?: boolean } = {}) {
     const isStateNode = target instanceof StateBuilder;
     const targetObject = {
-      target: isStateNode ? target.id : target,
+      target: isStateNode ? target._id : target,
       ...type,
     };
 
@@ -225,11 +225,16 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
 }
 
 class StateBuilder extends BaseMachineConfigBuilder {
-  public id: string;
+  public _id: string;
 
   constructor(id, ...args) {
     super(...args);
-    this.id = id;
+    this._id = id;
+  }
+
+  id = (id: string) => {
+    this._id = id;
+    this.onStateProperty('id', id);
   }
 
   public describe = (describeFn: any) => {
@@ -278,7 +283,11 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public onStateProperty(statePropertyName, statePropertyData) {
     const isFunction = typeof statePropertyData === 'function';
     const value = isFunction ? statePropertyData(actions) : statePropertyData;
-    this.setConfig({ [statePropertyName] : value });
+
+    const isState = value instanceof StateBuilder;
+    this.assignConfig({ 
+      [statePropertyName] : isState ? value._id : value 
+    });
 
     return this;
   }
@@ -319,7 +328,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public node = (stateName: string, ...args) : StateBuilder => {
     const currentConfig = this.getConfig();
 
-    if (!currentConfig.initial) {
+    if (!currentConfig.initial && currentConfig['type'] !== 'parallel') {
       currentConfig.initial = stateName;
     }
 
@@ -366,18 +375,18 @@ class StateBuilder extends BaseMachineConfigBuilder {
     const shouldBeCompound = thisConfig['type'] !== 'parallel'
     const newAssignConfig = { 
       states: { 
-        [stateNode.id]: childConfig 
+        [stateNode._id]: childConfig 
       }
     };
 
     stateNode.reconstruct({
       parent: this,
-      getConfig: () => newAssignConfig.states[stateNode.id],
+      getConfig: () => newAssignConfig.states[stateNode._id],
       setConfig: (newState) => {
         if (!newState) {
-          delete newAssignConfig.states[stateNode.id];
+          delete newAssignConfig.states[stateNode._id];
         } else {
-          newAssignConfig.states[stateNode.id] = newState;
+          newAssignConfig.states[stateNode._id] = newState;
         }
       }
     })
@@ -397,14 +406,32 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public require = this.invoke;
   public import = this.invoke;
 
-  public atomic = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args);
-  public compound = (stateName: string, ...args) => this.node(stateName, { type: 'compound' }, ...args);
-  public parallel = (stateName: string, ...args) => this.node(stateName, { type: 'parallel' }, ...args);
-  public final = (stateName: string, ...args) => this.node(stateName, { type: 'final' }, ...args);
-  public history = (stateName: string, ...args) => this.node(stateName, { type: 'history' }, ...args);
-  public transient = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
-  public switch = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
-  public choice = (stateName: string, ...args) => this.node(stateName, { type: 'atomic' }, ...args).on('', '');
+  public atomic = (stateName: string, ...args) => this.updateOrCreateState(stateName, 'atomic', ...args);
+  public compound = (stateName: string, ...args) => this.updateOrCreateState(stateName, 'compound', ...args);
+  public parallel = (stateName: string, ...args) => this.updateOrCreateState(stateName,'parallel', ...args);
+  public final = (stateName: string, ...args) => this.updateOrCreateState(stateName,'final', ...args);
+  public history = (stateName: string, ...args) => this.updateOrCreateState(stateName,'history', ...args);
+  public transient = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
+  public switch = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
+  public choice = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
+  public state = this.atomic;
+
+  public shallow = () => this.onStateProperty('history', 'shallow')
+  public deep = () => this.onStateProperty('history', 'deep')
+
+  updateOrCreateState(stateName: any, type: string, ...args) {
+    const isChildrenFn = typeof stateName === 'function' && ['parallel', 'compound'].includes(type);
+    if (isChildrenFn) {
+      this.onStateProperty('type', type)
+      return stateName(this);
+    }
+
+    if (type === 'final' && stateName === undefined) {
+      return this.onStateProperty('type', 'final');
+    }
+
+    return this.node(stateName, { type: type }, ...args)
+  }
 }
 
 class MachineBuilder extends StateBuilder {

@@ -1,7 +1,7 @@
 // tslint:disable
 
 import { expect } from 'chai';
-import Machine from './index';
+import Machine from '../index';
 
 describe('test state machine', () => {
 
