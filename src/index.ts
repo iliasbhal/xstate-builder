@@ -106,14 +106,14 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
     return this.getChainMethods();
   }
 
-  public action(actionConfig: any) {
+  public actions(actionConfig: any) {
     const isFunction = typeof actionConfig === 'function';
     const targetObject = {
-      action: isFunction ? actionConfig(actions) : actionConfig,
+      actions: isFunction ? actionConfig(actions) : actionConfig,
     };
 
     const currentTransitionConfig = this.getConfig();
-    const nextTransitionConfig = this.updateTransition('action', currentTransitionConfig, targetObject);
+    const nextTransitionConfig = this.updateTransition('actions', currentTransitionConfig, targetObject);
     this.setConfig(nextTransitionConfig);
 
     return this.getChainMethods();
@@ -137,26 +137,28 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   public elseif = this.cond;
   public case = this.cond;
   public guard = this.cond;
-  public do = this.action;
+  public do = this.actions;
   public redirect = this.target;
   public default = this.target;
 
   // shorthand methods
-  public stop = () => this.action([]); // forbidden transition;
-  public doNothing = () => this.action([]); // forbidden transition;
-  public stopPopagation = () => this.action([]);
-  public send = (actionName: string, options: any) => this.action(actions.send(actionName, options));
-  public respond = (actionName: string, options: any) => this.action(actions.respond(actionName, options));
-  public raise = (actionName: string) => this.action(actions.raise(actionName));
-  public forwardTo = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
-  public forward = (actionName: string) => this.action(actions.send(actionName, { to: actionName }));
-  public escalate = (actionName: string) => this.action(actions.escalate(actionName));
-  public assign = (assignConfig: any) => this.action(actions.assign(assignConfig));
-  public error = (actionName: string) => this.action(actions.escalate(actionName));
-  public log = (expr?: any, label?: any) => this.action(actions.log(expr, label));
+  public action = (actionConfig) => this.actions(actionConfig);
+  public stop = () => this.actions([]); // forbidden transition;
+  public doNothing = () => this.actions([]); // forbidden transition;
+  public stopPopagation = () => this.actions([]);
+  public send = (actionName: string, options: any) => this.actions(actions.send(actionName, options));
+  public respond = (actionName: string, options: any) => this.actions(actions.respond(actionName, options));
+  public raise = (actionName: string) => this.actions(actions.raise(actionName));
+  public forwardTo = (actionName: string) => this.actions(actions.send(actionName, { to: actionName }));
+  public forward = (actionName: string) => this.actions(actions.send(actionName, { to: actionName }));
+  public escalate = (actionName: string) => this.actions(actions.escalate(actionName));
+  public assign = (assignConfig: any) => this.actions(actions.assign(assignConfig));
+  public error = (actionName: string) => this.actions(actions.escalate(actionName));
+  public log = (expr?: any, label?: any) => this.actions(actions.log(expr, label));
 
   private updateTransition(key:string, currentTranstionConfig, targetObject) {
     let transitionConfig = currentTranstionConfig;
+
 
     const isUndefined = typeof currentTranstionConfig === 'undefined';
     const isEmptyObject = !isUndefined && JSON.stringify(currentTranstionConfig) === '{}';
@@ -177,7 +179,8 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
       };
     }
 
-    const isObject = typeof currentTranstionConfig === 'object';
+
+    const isObject = typeof transitionConfig === 'object';
     if (isObject) {
       const isArray = Array.isArray(transitionConfig);
       if (!isArray) {
@@ -185,6 +188,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
         if (!isAlreadyDefined) {
           return Object.assign({}, transitionConfig, targetObject);
         }
+
 
         transitionConfig = [transitionConfig];
       }
@@ -218,7 +222,9 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
     const transitionBuilder = (eventName: string) => new TransitionBuilder({
       parent: this,
       getConfig: () => this.getConfig()[eventName],
-      setConfig: value => this.assignConfig({ [eventName]: value }),
+      setConfig: value => {
+        this.assignConfig({ [eventName]: value })
+      },
     });
 
     return (transitionConfig) => {
@@ -404,9 +410,6 @@ class StateBuilder extends BaseMachineConfigBuilder {
       },
     });
 
-
-    
-
     historyBuilder.handleCall(args, (obj) => {
       Object.keys(obj).forEach(objKey => {
         if (objKey === 'deep') {
@@ -485,6 +488,17 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public switch = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
   public choice = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
   public state = this.atomic;
+
+  public states = (children: any[], ...args) => {
+    return children.map((child) => {
+      if(typeof child === 'string') {
+        return this.atomic(child, ...args);
+      } else if (child instanceof StateBuilder) {
+        this.addChildState(child);
+        return child;
+      }
+    })
+  }
 
   updateOrCreateState(stateName: any, type: string, ...args) {
     const isChildrenFn = typeof stateName === 'function' && ['parallel', 'compound'].includes(type);

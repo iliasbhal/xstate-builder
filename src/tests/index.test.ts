@@ -110,7 +110,7 @@ describe('test state machine', () => {
               "type": "atomic",
               "on": {
                 "CLICK": {
-                  "action": "DO"
+                  "actions": "DO"
                 }
               }
             },
@@ -290,8 +290,8 @@ describe('test state machine', () => {
           'type': 'atomic',
           'on': {
             'MOUSE_DOWN': [
-              { 'cond': 'GUARD', 'action': 'ACTION', },
-              { 'cond': 'GUARD2', 'action': 'ACTION2', },
+              { 'cond': 'GUARD', 'actions': 'ACTION', },
+              { 'cond': 'GUARD2', 'actions': 'ACTION2', },
             ],
           },
         },
@@ -314,11 +314,11 @@ describe('test state machine', () => {
           'on': {
             'MOUSE_DOWN': {
               'cond': 'GUARD',
-              'action': 'ACTION',
+              'actions': 'ACTION',
             },
             'MOUSE_UP': {
               'cond': 'GUARD',
-              'action': 'ACTION',
+              'actions': 'ACTION',
             },
           },
         },

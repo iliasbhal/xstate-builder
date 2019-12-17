@@ -2,9 +2,142 @@
 
 import { expect } from 'chai';
 import Machine from '../index';
+import { assign } from 'xstate';
+
+it('should be able to reproduce async sequence' , () => {
+  // example found on: https://xstate.js.org/docs/patterns/sequence.html#sequence
+
+  const getDataFromEvent = (context, event: any) => event.data;
+  
+  const machineConfig = Machine.Builder((machine) => {
+    machine.id('friends');
+    machine.context({
+      userId: 42, 
+      user: undefined, 
+      friends: undefined,
+    });
+
+    const gettingUser = machine.state('gettingUser');
+    const gettingFriends = machine.state('gettingFriends')
+    const success = machine.final('success');
 
 
-  it('should be able to reproduce fetch state machine example', () => {
+    gettingUser.invoke({ src: getUserInfo })
+      .onDone(t => t
+        .target(gettingFriends)
+        .assign({
+          user: getDataFromEvent
+        })
+      );
+
+    gettingFriends.invoke({ src: getUserFriends })
+      .onDone(t => t
+        .target(success)
+        .assign({
+          friends: getDataFromEvent
+        })
+      );
+  });
+
+  const expectedConfig = {
+    id: 'friends',
+    context: { userId: 42, user: undefined, friends: undefined },
+    initial: 'gettingUser',
+    states: {
+      gettingUser: {
+        type: "atomic",
+        invoke: {
+          src: getUserInfo,
+          onDone: {
+            target: 'gettingFriends',
+            actions: assign({
+              user: getDataFromEvent,
+            })
+          }
+        }
+      },
+      gettingFriends: {
+        type: "atomic",
+        invoke: {
+          src: getUserFriends,
+          onDone: {
+            target: 'success',
+            actions: assign({
+              friends: getDataFromEvent
+            })
+          }
+        }
+      },
+      success: {
+        type: 'final'
+      }
+    }
+  }
+  
+  expect(machineConfig).to.deep.equal(expectedConfig)
+
+  function getUserInfo(context) {
+    return fetch('/api/users/${context.userId}').then(response =>
+      response.json()
+    );
+  }
+  
+  // Returns a Promise
+  function getUserFriends(context) {
+    const { friends } = context.user;
+  
+    return Promise.all(
+      friends.map(friendId =>
+        fetch('/api/users/${context.userId}/').then(response => response.json())
+      )
+    );
+  }
+});
+
+it('should be able to reproduce basic sequence' , () => {
+  // example found on: https://xstate.js.org/docs/patterns/sequence.html#sequence
+  const machineConfig = Machine.Builder((machine) => {
+    machine.id('step');
+
+    machine.states(['one', 'two', 'three'])
+      .forEach((step, i, steps) => {
+        const isFirst = i === 0;
+        const isLast = i === steps.length - 1;
+
+        if (!isFirst) {
+          step.on('PREV').target(steps[i - 1])
+        } 
+
+        if (!isLast) {
+          step.on('NEXT').target(steps[i + 1])
+        }
+
+        if (isLast) {
+          step.final();
+        }
+      })
+  });
+
+  expect(machineConfig).to.deep.equal({
+    id: 'step',
+    initial: 'one',
+    states: {
+      one: {
+        type: "atomic",
+        on: { NEXT: 'two' }
+      },
+      two: {
+        type: "atomic",
+        on: { NEXT: 'three', PREV: 'one' }
+      },
+      three: {
+        type: 'final',
+        on: { PREV: 'two' }
+      }
+    }
+  })
+})
+it('should be able to reproduce deeply nested', () => {
     // example found on https://xstate.js.org/docs/guides/statenodes.html#state-node-types
 
     const machineConfig = Machine.Builder((machine) => {
@@ -18,18 +151,17 @@ import Machine from '../index';
 
       idle.on('FETCH').target(pending);
 
-      pending
-        .onDone(success)
+      pending.onDone(success)
         .parallel((parallel) => {
           ressourceIds.forEach((ressourceName) => {
             parallel.state(ressourceName)
-            .compound(child => {
-                child.state('pending')
-                  .on(`FULFILL.${ressourceName}`)
-                  .target('success')
+              .compound(child => {
+                  child.state('pending')
+                    .on(`FULFILL.${ressourceName}`)
+                    .target('success')
 
-                child.final('success')
-            }) 
+                  child.final('success')
+              }) 
           })
         })
 
