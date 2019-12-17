@@ -7,6 +7,7 @@ class BaseMachineConfigBuilder {
   public getConfig: any;
   public setConfig: any;
   public onChange: any;
+  public methods: any;
 
   constructor(attachConfig?: { parent, getConfig, setConfig }) {
     this.reconstruct(attachConfig);
@@ -52,11 +53,15 @@ class BaseMachineConfigBuilder {
     });
   }
 
-  public handleCall(...args) {
+  public handleCall(args, transformFunction?) {
     const assignObjectConfig = (argAssignObj) => {
       const isObject = typeof argAssignObj === 'object';
       if (isObject) {
-        this.assignConfig({ ...argAssignObj });
+        const assignedConfig = transformFunction
+          ? transformFunction({ ...argAssignObj })
+          : { ...argAssignObj };
+
+        this.assignConfig(assignedConfig);
       }
     };
 
@@ -224,6 +229,36 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
   }
 }
 
+class HistoryBuilder extends BaseMachineConfigBuilder {
+  public _id: string;
+
+  constructor(id, ...args) {
+    super(...args);
+    this._id = id;
+  }
+
+  id = (id: string) => {
+    this._id = id;
+    this.assignConfig({ 'id': id });
+  }
+
+  deep() {
+    this.setConfig({ history: 'deep' })
+    return this;
+  }
+
+  shallow() {
+    this.setConfig({ history: 'shallow' })
+    return this;
+  }
+
+  target(targetName) {
+    const isStateBuilder = targetName instanceof StateBuilder;
+    this.setConfig({ target: isStateBuilder ? targetName._id : targetName })
+    return this;
+  }
+}
+
 class StateBuilder extends BaseMachineConfigBuilder {
   public _id: string;
 
@@ -280,7 +315,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public onExit = (entryActions: any) => this.onStateProperty('exit', entryActions);
   public onDone = (entryActions: any) => this.onStateProperty('onDone', entryActions);
   public onError = (entryActions: any) => this.onStateProperty('onError', entryActions);
-  public onStateProperty(statePropertyName, statePropertyData) {
+  public onStateProperty(statePropertyName, statePropertyData, chainMethods?) {
     const isFunction = typeof statePropertyData === 'function';
     const value = isFunction ? statePropertyData(actions) : statePropertyData;
 
@@ -289,7 +324,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
       [statePropertyName] : isState ? value._id : value 
     });
 
-    return this;
+    return chainMethods || this.getChainMethods();
   }
 
   public on = (eventName: string, ...args) : TransitionBuilder => {
@@ -321,7 +356,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
       args.pop();
     }
 
-    transitionBuilder.handleCall(...args);
+    transitionBuilder.handleCall(args);
     return transitionBuilder;
   }
 
@@ -348,10 +383,46 @@ class StateBuilder extends BaseMachineConfigBuilder {
       }
     });
 
-    stateBuilder.handleCall(...args);
+    stateBuilder.handleCall(args);
     this.setConfig(currentConfig);
 
     return stateBuilder;
+  }
+
+  public history = (stateName, ...args) => {
+    const hisotryConfig = {
+      [stateName]: {
+        type: 'history',
+      }
+    };
+
+    const historyBuilder = new HistoryBuilder(stateName, {
+      getConfig: () => hisotryConfig[stateName],
+      setConfig: value => {
+        hisotryConfig[stateName] = Object.assign({}, hisotryConfig[stateName], value);
+        this.assignKeyConfig('states', hisotryConfig);
+      },
+    });
+
+
+    
+
+    historyBuilder.handleCall(args, (obj) => {
+      Object.keys(obj).forEach(objKey => {
+        if (objKey === 'deep') {
+          obj['history'] = 'deep';
+          delete obj['deep'];
+        } else if (objKey === 'shallow') {
+          obj['history'] = 'shallow';
+          delete obj['shallow'];
+        }
+      });
+
+      return obj;
+    });
+    this.assignKeyConfig('states', hisotryConfig);
+
+    return historyBuilder;
   }
 
   public invoke = (...args) : InvokeBuilder => {
@@ -363,7 +434,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
       setConfig: newData => currentConfig.invoke = newData,
     });
 
-    invokeBuilder.handleCall(...args);
+    invokeBuilder.handleCall(args);
     return invokeBuilder;
   }
 
@@ -410,14 +481,10 @@ class StateBuilder extends BaseMachineConfigBuilder {
   public compound = (stateName: string, ...args) => this.updateOrCreateState(stateName, 'compound', ...args);
   public parallel = (stateName: string, ...args) => this.updateOrCreateState(stateName,'parallel', ...args);
   public final = (stateName: string, ...args) => this.updateOrCreateState(stateName,'final', ...args);
-  public history = (stateName: string, ...args) => this.updateOrCreateState(stateName,'history', ...args);
   public transient = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
   public switch = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
   public choice = (stateName: string, ...args) => this.updateOrCreateState(stateName,'atomic', ...args).on('', '');
   public state = this.atomic;
-
-  public shallow = () => this.onStateProperty('history', 'shallow')
-  public deep = () => this.onStateProperty('history', 'deep')
 
   updateOrCreateState(stateName: any, type: string, ...args) {
     const isChildrenFn = typeof stateName === 'function' && ['parallel', 'compound'].includes(type);

@@ -3,15 +3,8 @@
 import { expect } from 'chai';
 import Machine from '../index';
 
-describe('test state machine', () => {
 
-  // TODO: state names should be minifiable.
-  // TODO add machine.defineNode .defineTransition etc etc
-  //      and machine.useNode useTransition etc etc
-  
-  // console.log(JSON.stringify(machineConfig, null, 2));
-
-  it('should able to add children using .children', () => {
+  it('should be able to reproduce fetch state machine example', () => {
     // example found on https://xstate.js.org/docs/guides/statenodes.html#state-node-types
 
     const machineConfig = Machine.Builder((machine) => {
@@ -25,19 +18,20 @@ describe('test state machine', () => {
 
       idle.on('FETCH').target(pending);
 
-      pending.onDone(success);
-      pending.parallel((parallel) => {
-        ressourceIds.forEach((ressourceName) => {
-          parallel.state(ressourceName)
-           .compound(child => {
-              child.state('pending')
-                .on(`FULFILL.${ressourceName}`)
-                .target('success')
+      pending
+        .onDone(success)
+        .parallel((parallel) => {
+          ressourceIds.forEach((ressourceName) => {
+            parallel.state(ressourceName)
+            .compound(child => {
+                child.state('pending')
+                  .on(`FULFILL.${ressourceName}`)
+                  .target('success')
 
-              child.final('success')
-           }) 
+                child.final('success')
+            }) 
+          })
         })
-      })
 
       success.compound((c) => {
         const items = c.state('items');
@@ -48,7 +42,7 @@ describe('test state machine', () => {
         item.on('BACK').target(items);
       })
     });
-    
+
     expect(machineConfig).to.deep.equal({
       id: 'fetch',
       initial: 'idle',
@@ -120,5 +114,3 @@ describe('test state machine', () => {
       }
     })
   })
-
-})

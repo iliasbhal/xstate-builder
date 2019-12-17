@@ -8,8 +8,9 @@ describe('test state machine', () => {
   // TODO: state names should be minifiable.
   // TODO add machine.defineNode .defineTransition etc etc
   //      and machine.useNode useTransition etc etc
-  
-  // console.log(JSON.stringify(machineConfig, null, 2));
+  // TODO: ability to use an ...args as StateBuilders[] 
+    // for .children .describe
+    // for .child 
 
   it('should able to add children using .children', () => {
     const machineConfig = Machine.Builder((machine) => {
@@ -33,6 +34,49 @@ describe('test state machine', () => {
               "type": "atomic"
             }
           }
+        }
+      }
+    });
+  })
+
+  it('should able to add history target', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      const testNode = machine.state('test');
+      machine.history('hist').deep().target(testNode);
+    });
+
+    const machineConfig2 = Machine.Builder((machine) => {
+      const testNode = machine.state('test');
+      machine.history('hist')
+        .target(testNode)
+        .deep();
+    });
+
+    const machineConfig3 = Machine.Builder((machine) => {
+      const testNode = machine.state('test');
+      machine.history('hist', { history: 'deep' })
+        .target(testNode)
+    });
+
+    const machineConfig4 = Machine.Builder((machine) => {
+      const testNode = machine.state('test');
+      machine.history('hist', { deep: true })
+        .target(testNode)
+    });
+
+    expect(machineConfig4).to.deep.equal(machineConfig);
+    expect(machineConfig3).to.deep.equal(machineConfig);
+    expect(machineConfig2).to.deep.equal(machineConfig);
+    expect(machineConfig).to.deep.equal({
+      "initial": "test",
+      "states": {
+        "test": {
+          "type": "atomic"
+        },
+        "hist": {
+          "type": "history",
+          "history": "deep",
+          "target": "test"
         }
       }
     });
