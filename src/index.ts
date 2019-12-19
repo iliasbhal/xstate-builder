@@ -1,6 +1,6 @@
-import { actions } from 'xstate';
-
 // tslint:disable
+import * as xState from 'xstate';
+const { Machine: XMachine, actions } = xState;
 
 class BaseMachineConfigBuilder {
   public parent: any;
@@ -82,7 +82,7 @@ class BaseMachineConfigBuilder {
 }
 
 class TransitionBuilder extends BaseMachineConfigBuilder {
-  public cond = (condName: string) => {
+  public cond(condName: string) {
     const targetObject = {
       cond: condName,
     };
@@ -94,7 +94,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
     return this.getChainMethods();
   }
 
-  public in = (condName: string) => {
+  public in(condName: string) {
     const targetObject = {
       in: condName,
     };
@@ -118,6 +118,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
 
     return this.getChainMethods();
   }
+
   public target(target: any, type: { internal?: boolean, external?: boolean } = {}) {
     const isStateNode = target instanceof StateBuilder;
     const targetObject = {
@@ -159,7 +160,6 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   private updateTransition(key:string, currentTranstionConfig, targetObject) {
     let transitionConfig = currentTranstionConfig;
 
-
     const isUndefined = typeof currentTranstionConfig === 'undefined';
     const isEmptyObject = !isUndefined && JSON.stringify(currentTranstionConfig) === '{}';
     if (isUndefined || isEmptyObject) {
@@ -168,6 +168,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
       }
 
       return {
+        ...currentTranstionConfig,
         ...targetObject,
       };
     }
@@ -188,7 +189,6 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
         if (!isAlreadyDefined) {
           return Object.assign({}, transitionConfig, targetObject);
         }
-
 
         transitionConfig = [transitionConfig];
       }
@@ -271,6 +271,10 @@ class StateBuilder extends BaseMachineConfigBuilder {
   constructor(id, ...args) {
     super(...args);
     this._id = id;
+  }
+
+  getMachine() {
+    return XMachine(this.getConfig);
   }
 
   id = (id: string) => {
@@ -471,6 +475,7 @@ class StateBuilder extends BaseMachineConfigBuilder {
 
 
   public data = this.context;
+  public withContext = this.context;
   public children = this.describe;
 
   public when = this.on;
@@ -525,15 +530,15 @@ class MachineBuilder extends StateBuilder {
 
 export default class Machine {
   public static Builder(builderFn) {
-    let data = {};
-    const state = new StateBuilder('machine', {
+    let data = {}
+    const stateBuilder = new StateBuilder('machine', {
       getConfig: () => data,
       setConfig: newValue => data = newValue,
     });
 
-    builderFn(state);
+    builderFn(stateBuilder);
 
-    return data;
+    return stateBuilder;
   }
 }
 
