@@ -12,6 +12,10 @@ describe('test state machine', () => {
     // for .children .describe
     // for .child 
 
+  // TODO: when using a referance as target, we need to automaticly
+  // append "#" or "." ie: .target when it's a child states
+  // should implement ".closest()" method to generate the target id.
+
   it('should able to add children using .children', () => {
     const machineConfig = Machine.Builder((machine) => {
       const parentNode = machine.atomic('test-node');
@@ -21,7 +25,7 @@ describe('test state machine', () => {
       parentNode.children([childNode1, childNode2])
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       "initial": "test-node",
       "states": {
         "test-node": {
@@ -64,10 +68,10 @@ describe('test state machine', () => {
         .target(testNode)
     });
 
-    expect(machineConfig4).to.deep.equal(machineConfig);
-    expect(machineConfig3).to.deep.equal(machineConfig);
-    expect(machineConfig2).to.deep.equal(machineConfig);
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig4.getConfig()).to.deep.equal(machineConfig.getConfig());
+    expect(machineConfig3.getConfig()).to.deep.equal(machineConfig.getConfig());
+    expect(machineConfig2.getConfig()).to.deep.equal(machineConfig.getConfig());
+    expect(machineConfig.getConfig()).to.deep.equal({
       "initial": "test",
       "states": {
         "test": {
@@ -100,7 +104,7 @@ describe('test state machine', () => {
       })
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       "initial": "test-node",
       "states": {
         "test-node": {
@@ -141,7 +145,7 @@ describe('test state machine', () => {
         })
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       "initial": "test-node",
       "states": {
         "test-node": {
@@ -165,7 +169,7 @@ describe('test state machine', () => {
         .default('TARGET3');
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       "initial": "transiant-example",
       "states": {
         "transiant-example": {
@@ -198,8 +202,8 @@ describe('test state machine', () => {
       state.context(() => ({ test: true }));
     });
 
-    expect(machineConfig).to.deep.equal(machineConfigUsingFunction);
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal(machineConfigUsingFunction.getConfig());
+    expect(machineConfig.getConfig()).to.deep.equal({
       'context': {
         'test': true,
       },
@@ -217,7 +221,7 @@ describe('test state machine', () => {
       });
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'node-1',
       'states': {
         'node-1': {
@@ -251,7 +255,7 @@ describe('test state machine', () => {
         });
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
         'atomic-node': {
@@ -283,7 +287,7 @@ describe('test state machine', () => {
           .cond('GUARD2').action('ACTION2');
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
         'atomic-node': {
@@ -306,7 +310,7 @@ describe('test state machine', () => {
         .on('MOUSE_UP').cond('GUARD').action('ACTION');
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
         'atomic-node': {
@@ -333,7 +337,7 @@ describe('test state machine', () => {
       });
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
         'atomic-node': {
@@ -354,7 +358,7 @@ describe('test state machine', () => {
       node2.on('CLICK').target(node1);
     });
 
-    expect(machineConfig).to.deep.equal({
+    expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
         'atomic-node': {
