@@ -317,6 +317,8 @@ class StateBuilder extends BaseMachineConfigBuilder {
     this.assignKeyConfig('states', childStateConfig['states']);
   }
 
+  public ctx = (contextObj: any) => this.onStateProperty('context', contextObj);
+  public assign = (contextObj: any) => this.onStateProperty('context', contextObj);
   public context = (contextObj: any) => this.onStateProperty('context', contextObj);
   public activites = (activites: any) => this.onStateProperty('activites', activites);
   public strict = (strictMode: boolean = true) => this.onStateProperty('strict', strictMode);
@@ -512,8 +514,8 @@ class StateBuilder extends BaseMachineConfigBuilder {
       return stateName(this);
     }
 
-    if (type === 'final' && stateName === undefined) {
-      return this.onStateProperty('type', 'final');
+    if (stateName === undefined) {
+      return this.onStateProperty('type', type);
     }
 
     return this.node(stateName, { type: type }, ...args)

@@ -4,205 +4,6 @@ import { expect } from 'chai';
 import Machine from '../index';
 import { assign, spawn } from 'xstate';
 
-it('should be able to reproduce TodoMVC example' , () => {
-  const actions = {
-    clearCompleted: ctx => ctx.todos.filter(todo => !todo.completed),
-  }
-
-  const todoMachine = Machine.Builder(() => {
-
-  })
-
-
-  const todosImpl = {
-    createTodo: (title) => {
-      return {
-        id: Math.random().toString(),
-        title: title,
-        completed: false
-      }
-    },
-
-    markCompleted: ctx => ctx.todos.forEach(todo => todo.ref.send("SET_COMPLETED")),
-    clearCompleted: ctx => ctx.todos.filter(todo => !todo.completed),
-    deleteTodo: (ctx, e) => ctx.todos.filter(todo => todo.id !== e.id),
-    setActive: ctx => ctx.todos.forEach(todo => todo.ref.send("SET_ACTIVE")),
-    getValue: (ctx, e) => e.value,
-    
-    isValid: (ctx, e) => e.value.trim().length,
-
-    getTodoWithMachine: (ctx, e) => {
-      return ctx.todos.map(todo => ({
-        ...todo,
-        ref: spawn(todoMachine.withContext(todo))
-      }));
-    },
-
-    initializeTodo: (ctx, e) => {
-      return ctx.todos.map(todo => ({
-        ...todo,
-        ref: spawn(todoMachine.withContext(todo))
-      }));
-    },
-
-    newCommitTodo: (ctx, e) => { 
-      const newTodo = todosImpl.createTodo(e.value.trim());
-      return ctx.todos.concat({
-        ...newTodo,
-        ref: spawn(todoMachine.withContext(newTodo))
-      });
-    },
-
-    todoCommit: (ctx, e) => {
-      return ctx.todos.map(todo => {
-        return todo.id === e.todo.id
-          ? { ...todo, ...e.todo, ref: todo.ref }
-          : todo;
-      })
-    },
-
-  };
-
-  const machineConfig = Machine.Builder((machine) => {
-    machine.id('todos');
-    machine.context({
-      todo: '',
-      todos: [],
-    });
-
-    const initializing = machine.transient('initializing');
-    const all = machine.state('all');
-    const active = machine.state('active');
-    const completed = machine.state('completed');
-
-    initializing.target(all)
-      .onEntry(t => t.assign({
-        todos: todosImpl.initializeTodo,
-      }));
-
-    machine.on("SHOW.all").target('.all');
-    machine.on("SHOW.active").target('.active');
-    machine.on("SHOW.completed").target('.completed');
-
-    machine.on("NEWTODO.CHANGE").assign({
-      todo: todosImpl.getValue,
-    });
-
-    machine.on("NEWTODO.COMMIT")
-      .if(todosImpl.isValid)
-      .actions((action) =>  [
-        action.assign({
-          todo: "", // clear todo
-          todos: todosImpl.newCommitTodo,
-        }),
-        "persist"
-      ]);
-
-    machine.on("TODO.COMMIT")
-      .actions((action) =>  [
-        action.assign({
-          todos: todosImpl.todoCommit,
-        }),
-        "persist"
-      ]);
-
-    machine.on("TODO.DELETE")
-      .actions((action) => [
-        action.assign({
-          todos: todosImpl.deleteTodo,
-        }),
-        "persist"
-      ]);
-
-    machine.on("MARK.completed").actions(() => todosImpl.markCompleted);
-    machine.on("MARK.active").actions(() => todosImpl.setActive);
-
-    machine.on("CLEAR_COMPLETED").assign({
-      todos: todosImpl.clearCompleted,
-    });
-  });
-
-  // console.log(JSON.stringify(machineConfig.getConfig(), null, 2));
-  // console.log(machineConfig.getConfig());
-
-  // return;
-  expect(machineConfig.getConfig()).to.deep.equal({
-    id: "todos",
-    context: {
-      todo: "", // new todo
-      todos: []
-    },
-    initial: "initializing",
-    states: {
-      initializing: {
-        "type": "atomic",
-        entry: assign({
-          todos: todosImpl.initializeTodo,
-        }),
-        on: {
-          "": "all"
-        }
-      },
-      "all": {
-        "type": "atomic"
-      },
-      "active": {
-        "type": "atomic"
-      },
-      "completed": {
-        "type": "atomic"
-      }
-    },
-    on: {
-      "NEWTODO.CHANGE": {
-        actions: assign({
-          todo: todosImpl.getValue
-        })
-      },
-      "NEWTODO.COMMIT": {
-        actions: [
-          assign({
-            todo: "", // clear todo
-            todos: todosImpl.newCommitTodo,
-          }),
-          "persist"
-        ],
-        cond: todosImpl.isValid,
-      },
-      "TODO.COMMIT": {
-        actions: [
-          assign({
-            todos: todosImpl.todoCommit,
-          }),
-          "persist"
-        ]
-      },
-      "TODO.DELETE": {
-        actions: [
-          assign({
-            todos: todosImpl.deleteTodo,
-          }),
-          "persist"
-        ]
-      },
-      "SHOW.all": ".all",
-      "SHOW.active": ".active",
-      "SHOW.completed": ".completed",
-      "MARK.completed": {
-        actions: todosImpl.markCompleted,
-      },
-      "MARK.active": {
-        actions: todosImpl.setActive,
-      },
-      "CLEAR_COMPLETED": {
-        actions: assign({
-          todos: todosImpl.clearCompleted,
-        })
-      }
-    }
-  })
-
-})
 it('should be able to reproduce async sequence' , () => {
   // example found on: https://xstate.js.org/docs/patterns/sequence.html#sequence
 
@@ -210,16 +11,16 @@ it('should be able to reproduce async sequence' , () => {
   
   const machineConfig = Machine.Builder((machine) => {
     machine.id('friends');
+    
+    const gettingUser = machine.state('gettingUser');
+    const gettingFriends = machine.state('gettingFriends')
+    const success = machine.final('success');
+    
     machine.context({
       userId: 42, 
       user: undefined, 
       friends: undefined,
     });
-
-    const gettingUser = machine.state('gettingUser');
-    const gettingFriends = machine.state('gettingFriends')
-    const success = machine.final('success');
-
 
     gettingUser.invoke({ src: getUserInfo })
       .onDone(t => t
