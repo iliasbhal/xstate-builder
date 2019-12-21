@@ -16,6 +16,30 @@ describe('test state machine', () => {
   // append "#" or "." ie: .target when it's a child states
   // should implement ".closest()" method to generate the target id.
 
+  it('should be able to chain cond and action', () => {
+    const customGuard = ctx => ctx.completed;
+    const machineConfig = Machine.Builder((machine) => {
+      
+      machine.transient('unknown')
+        .cond(customGuard).target('another')
+        .default('error');
+    })
+
+    expect(machineConfig.getConfig()).to.deep.equal({ 
+      initial: 'unknown',
+      states: { 
+        unknown:{ 
+          type: 'atomic',
+          on: { 
+            '': [ 
+              { cond: customGuard, target: 'another' }, 
+              { target: 'error' } 
+            ] 
+          } 
+        } 
+      } 
+    });
+  })
   it('should able to add children using .children', () => {
     const machineConfig = Machine.Builder((machine) => {
       const parentNode = machine.atomic('test-node');

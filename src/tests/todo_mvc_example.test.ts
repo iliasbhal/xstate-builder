@@ -52,6 +52,11 @@ it('should be able to reproduce TodoMVC example' , () => {
       })
     },
 
+    commitTodoEvent: ctx => ({ type: "TODO.COMMIT", todo: ctx }),
+    deleteTodoEvent: ctx => ({ type: "TODO.DELETE", id: ctx.id }),
+    getTitle: (ctx : any) => ctx.title,
+    isCompletedGuard: ctx => ctx.completed,
+    hasTitle: ctx => ctx.title.trim().length > 0,
   };
 
   const todoMachine = Machine.Builder((machine) => {
@@ -74,33 +79,28 @@ it('should be able to reproduce TodoMVC example' , () => {
       .target('.reading.completed')
       .actions((action) => [
         action.assign({ completed: true }),
-        action.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+        action.sendParent(todosImpl.commitTodoEvent)
       ]);
 
     // define you states transitions
     deleted
-      .onEntry((action) => action.sendParent(ctx => ({ type: "TODO.DELETE", id: ctx.id })));
+      .onEntry((action) => action.sendParent(todosImpl.deleteTodoEvent));
 
     editing
-      .onEntry((action) => action.assign({ prevTitle: (ctx : any) => ctx.title }))
-      .on('CHANGE').assign({
-        title: (ctx, e: any) => e.value
-      })
+      .onEntry((action) => action.assign({ prevTitle: todosImpl.getTitle }))
+      .on('CHANGE').assign({ title: todosImpl.getValue})
       .on('COMMIT')
-        .cond((t) => ctx => ctx.title.trim().length > 0)
-        .actions(actions => actions.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx })))
+        .cond(todosImpl.hasTitle).sendParent(todosImpl.commitTodoEvent)
         .target("reading.hist")
         .default(deleted)
       .on('BLUR')
-        .target(reading)
-        .actions(action => action.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx })))
+        .target(reading).sendParent(todosImpl.commitTodoEvent)
       .on('CANCEL')
         .target(reading)
-        .assign({ title: (ctx: any) => ctx.prevTitle })
+        .assign({ title: todosImpl.getTitle })
     
     reading.on('EDIT').target(editing).actions('focusInput');
     reading.compound(() => {
-
       const unknown = reading.transient('unknown');
       const pending = reading.state('pending');
       const completed = reading.state('completed');
@@ -111,23 +111,23 @@ it('should be able to reproduce TodoMVC example' , () => {
           .target(pending)
           .actions(action => [
             action.assign({ completed: false }),
-            action.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx })),
+            action.sendParent(todosImpl.commitTodoEvent),
           ])
         .on('TOGGLE_COMPLETE')
           .target(pending)
           .actions(action => [
             action.assign({ completed: false }),
-            action.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx })),
+            action.sendParent(todosImpl.commitTodoEvent),
           ])
         
       unknown
-        .cond(ctx => ctx.completed).target(completed)
+        .cond(todosImpl.isCompletedGuard).target(completed)
         .default(pending);
       
       pending.on('SET_COMPLETED').target(completed)
         .actions((action) => [
           action.assign({ completed: true }),
-          action.sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+          action.sendParent(todosImpl.commitTodoEvent)
         ])
     });
   });
@@ -190,8 +190,6 @@ it('should be able to reproduce TodoMVC example' , () => {
       todos: todosImpl.clearCompleted,
     });
   });
-
-  console.log(JSON.stringify(todoMachine.getConfig(), null, 2));
 
   expect(machineConfig.getConfig()).to.deep.equal({
     id: "todos",
@@ -282,7 +280,7 @@ it('should be able to reproduce TodoMVC example' , () => {
         target: ".reading.completed",
         actions: [
           assign({ completed: true }),
-          sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+          sendParent(todosImpl.commitTodoEvent)
         ]
       },
       DELETE: "deleted"
@@ -296,7 +294,7 @@ it('should be able to reproduce TodoMVC example' , () => {
             "type": "atomic",
             on: {
               "": [
-                { target: "completed", cond: ctx => ctx.completed },
+                { target: "completed", cond: todosImpl.isCompletedGuard },
                 { target: "pending" }
               ]
             }
@@ -308,7 +306,7 @@ it('should be able to reproduce TodoMVC example' , () => {
                 target: "completed",
                 actions: [
                   assign({ completed: true }),
-                  sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+                  sendParent(todosImpl.commitTodoEvent)
                 ]
               }
             }
@@ -320,14 +318,14 @@ it('should be able to reproduce TodoMVC example' , () => {
                 target: "pending",
                 actions: [
                   assign({ completed: false }),
-                  sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+                  sendParent(todosImpl.commitTodoEvent)
                 ]
               },
               SET_ACTIVE: {
                 target: "pending",
                 actions: [
                   assign({ completed: false }),
-                  sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+                  sendParent(todosImpl.commitTodoEvent)
                 ]
               }
             }
@@ -345,54 +343,35 @@ it('should be able to reproduce TodoMVC example' , () => {
       },
       editing: {
         "type": "atomic",
-        entry: assign({ prevTitle: (ctx : any) => ctx.title }),
+        entry: assign({ prevTitle: todosImpl.getTitle }),
         on: {
           CHANGE: {
             actions: assign({
-              title: (ctx, e: any) => e.value
+              title: todosImpl.getValue,
             })
           },
           COMMIT: [
             {
               target: "reading.hist",
-              actions: sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx })),
-              cond: ctx => ctx.title.trim().length > 0
+              actions: sendParent(todosImpl.commitTodoEvent),
+              cond: todosImpl.hasTitle,
             },
             { target: "deleted" }
           ],
           BLUR: {
             target: "reading",
-            actions: sendParent(ctx => ({ type: "TODO.COMMIT", todo: ctx }))
+            actions: sendParent(todosImpl.commitTodoEvent)
           },
           CANCEL: {
             target: "reading",
-            actions: assign({ title: (ctx: any) => ctx.prevTitle })
+            actions: assign({ title: todosImpl.getTitle})
           }
         }
       },
       deleted: {
         "type": "atomic",
-        entry: sendParent(ctx => ({ type: "TODO.DELETE", id: ctx.id }))
+        entry: sendParent(todosImpl.deleteTodoEvent)
       }
     }
   })
-
 })
-
-
-// given('I have 100 shares of MSFT stock')
-//   .and('I have 150 shares of APPL stock')
-//   .and('the time is before close of trading')
-// .when('I ask to sell 20 shares of MSFT stock')
-// .then('I should have 80 shares of MSFT stock')
-//   .and('I should have 150 shares of APPL stock')
-//   .and('a sell order for 20 shares of MSFT stock should have been executed')
-
-
-// function given(args) {
-//   return {
-//     and: given,
-//     when: given,
-//     then: given,
-//   }
-// }

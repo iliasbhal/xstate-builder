@@ -121,8 +121,11 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
 
   public target(target: any, type: { internal?: boolean, external?: boolean } = {}) {
     const isStateNode = target instanceof StateBuilder;
+    const isTransitionNode = target instanceof TransitionBuilder;
     const targetObject = {
-      target: isStateNode ? target._id : target,
+      target: isStateNode ? target._id 
+        : isTransitionNode ? target.parent._id
+        : target,
       ...type,
     };
 
@@ -139,15 +142,18 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   public case = this.cond;
   public guard = this.cond;
   public do = this.actions;
+  public action = this.actions;
+  public execute =this.actions;
+  public call = this.actions;
   public redirect = this.target;
   public default = this.target;
 
   // shorthand methods
-  public action = (actionConfig) => this.actions(actionConfig);
   public stop = () => this.actions([]); // forbidden transition;
   public doNothing = () => this.actions([]); // forbidden transition;
   public stopPopagation = () => this.actions([]);
   public send = (actionName: string, options: any) => this.actions(actions.send(actionName, options));
+  public sendParent = (actionName: string, options: any) => this.actions(actions.sendParent(actionName, options));
   public respond = (actionName: string, options: any) => this.actions(actions.respond(actionName, options));
   public raise = (actionName: string) => this.actions(actions.raise(actionName));
   public forwardTo = (actionName: string) => this.actions(actions.send(actionName, { to: actionName }));
@@ -161,7 +167,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
     let transitionConfig = currentTranstionConfig;
 
     const isUndefined = typeof currentTranstionConfig === 'undefined';
-    const isEmptyObject = !isUndefined && JSON.stringify(currentTranstionConfig) === '{}';
+    const isEmptyObject = !isUndefined && Object.keys(currentTranstionConfig).length === 0;
     if (isUndefined || isEmptyObject) {
       if (key === 'target') {
         return targetObject.target;
@@ -175,6 +181,7 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
 
     const isString = typeof currentTranstionConfig === 'string';
     if (isString) {
+
       transitionConfig = {
         target: currentTranstionConfig,
       };
