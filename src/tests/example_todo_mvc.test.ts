@@ -73,32 +73,6 @@ it('should be able to reproduce TodoMVC example' , () => {
     const editing = machine.state('editing');
     const deleted = machine.state('deleted');
 
-    // Define your machine wide transitions
-    machine.on('DELETE').target(deleted);
-    machine.on('TOGGLE_COMPLETE')
-      .target('.reading.completed')
-      .actions((action) => [
-        action.assign({ completed: true }),
-        action.sendParent(todosImpl.commitTodoEvent)
-      ]);
-
-    // define you states transitions
-    deleted
-      .onEntry((action) => action.sendParent(todosImpl.deleteTodoEvent));
-
-    editing
-      .onEntry((action) => action.assign({ prevTitle: todosImpl.getTitle }))
-      .on('CHANGE').assign({ title: todosImpl.getValue})
-      .on('COMMIT')
-        .cond(todosImpl.hasTitle).sendParent(todosImpl.commitTodoEvent)
-        .target("reading.hist")
-        .default(deleted)
-      .on('BLUR')
-        .target(reading).sendParent(todosImpl.commitTodoEvent)
-      .on('CANCEL')
-        .target(reading)
-        .assign({ title: todosImpl.getTitle })
-    
     reading.on('EDIT').target(editing).actions('focusInput');
     reading.compound(() => {
       const unknown = reading.transient('unknown');
@@ -130,6 +104,32 @@ it('should be able to reproduce TodoMVC example' , () => {
           action.sendParent(todosImpl.commitTodoEvent)
         ])
     });
+
+        // define you states transitions
+    deleted
+      .onEntry((action) => action.sendParent(todosImpl.deleteTodoEvent));
+
+    editing
+      .onEntry((action) => action.assign({ prevTitle: todosImpl.getTitle }))
+      .on('CHANGE').assign({ title: todosImpl.getValue})
+      .on('COMMIT')
+        .cond(todosImpl.hasTitle).sendParent(todosImpl.commitTodoEvent)
+        .target("reading.hist")
+        .default(deleted)
+      .on('BLUR')
+        .target(reading).sendParent(todosImpl.commitTodoEvent)
+      .on('CANCEL')
+        .target(reading)
+        .assign({ title: todosImpl.getTitle })
+
+    // Define your machine wide transitions
+    machine.on('DELETE').target(deleted);
+    machine.on('TOGGLE_COMPLETE')
+      .target('.reading.completed')
+      .actions((action) => [
+        action.assign({ completed: true }),
+        action.sendParent(todosImpl.commitTodoEvent)
+      ]);
   });
 
   const machineConfig = Machine.Builder((machine) => {
@@ -283,7 +283,7 @@ it('should be able to reproduce TodoMVC example' , () => {
           sendParent(todosImpl.commitTodoEvent)
         ]
       },
-      DELETE: "deleted"
+      DELETE: ".deleted"
     },
     states: {
       reading: {

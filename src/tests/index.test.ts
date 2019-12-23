@@ -16,6 +16,57 @@ describe('test state machine', () => {
   // append "#" or "." ie: .target when it's a child states
   // should implement ".closest()" method to generate the target id.
 
+  // external() internal() aren't working;
+
+  it('should automaticaly recalculate target id for nested states', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      machine.id('test-state');
+
+      const internal1 = machine.state('internal1');
+      const internal2 = machine.state('internal2');
+
+      const child1 = machine.state('child1');
+      const compoundNode = machine.compound('compound-test')
+      compoundNode.addChildState(child1);
+
+      machine.on('CLICK').target(internal1);
+      machine.on('LONG_PRESS').target(internal2);
+      machine.on('DOUBLE_CLICK').target(child1);
+
+      internal1.on('TAP').target(internal2);
+
+    })
+
+    expect(machineConfig.getConfig()).to.deep.equal({
+      "id": "test-state",
+      "initial": "internal1",
+      "states": {
+        "internal1": {
+          "type": "atomic",
+          "on": {
+            "TAP": "internal2"
+          }
+        },
+        "internal2": {
+          "type": "atomic"
+        },
+        "compound-test": {
+          "type": "compound",
+          "states": {
+            "child1": {
+              "type": "atomic"
+            }
+          }
+        }
+      },
+      "on": {
+        "CLICK": ".internal1",
+        "LONG_PRESS": ".internal2",
+        "DOUBLE_CLICK": ".compound-test.child1"
+      }
+    })
+  })
+
   it('should be able to chain cond and action', () => {
     const customGuard = ctx => ctx.completed;
     const machineConfig = Machine.Builder((machine) => {

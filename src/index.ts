@@ -119,21 +119,53 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
     return this.getChainMethods();
   }
 
-  public target(target: any, type: { internal?: boolean, external?: boolean } = {}) {
-    const isStateNode = target instanceof StateBuilder;
-    const isTransitionNode = target instanceof TransitionBuilder;
+  public target(target: (StateBuilder | string) | (StateBuilder | string)[], type: { internal?: boolean, external?: boolean } = {}) {
     const targetObject = {
-      target: isStateNode ? target._id 
-        : isTransitionNode ? target.parent._id
-        : target,
+      target: Array.isArray(target) ? target.map((t) => this.getTargetId(t)) 
+        : this.getTargetId(target),
       ...type,
     };
+
 
     const currentTransitionConfig = this.getConfig();
     const nextTransitionConfig = this.updateTransition('target', currentTransitionConfig, targetObject);
     this.setConfig(nextTransitionConfig);
 
     return this.getChainMethods();
+  }
+
+  private getTargetId(target) {
+    const isStateNode = target instanceof StateBuilder;
+    const isTransitionNode = target instanceof TransitionBuilder;
+
+    let targetId = isStateNode ? target._id 
+      : isTransitionNode ? target.parent._id
+      : target;
+
+    // ensure to correclty refence child states.
+    const currentContext = this.parent.getConfig();
+    const normalizedTargetId = accumulatorTarget(targetId, currentContext, '') || targetId;
+    return normalizedTargetId;
+
+    function accumulatorTarget(targetId, currentContext, acc = "") {
+      const childStates = Object.keys(currentContext['states'] || {})
+      const isChildState = currentContext['states'] && childStates.includes(targetId);
+      
+      if (isChildState) {
+        targetId = acc + '.' + targetId;
+        return targetId;
+      
+      } 
+
+      for (const stateName of childStates) {
+        const normalizedTargetId = accumulatorTarget(targetId, currentContext['states'][stateName], '.' + stateName)
+        if (normalizedTargetId) {
+          return normalizedTargetId;
+        }
+      }
+
+      return undefined;
+    }
   }
 
   // aliases
@@ -162,6 +194,9 @@ class TransitionBuilder extends BaseMachineConfigBuilder {
   public assign = (assignConfig: any) => this.actions(actions.assign(assignConfig));
   public error = (actionName: string) => this.actions(actions.escalate(actionName));
   public log = (expr?: any, label?: any) => this.actions(actions.log(expr, label));
+  public internal = (target: any) => this.target(target, { internal: true });
+  public external = (target: any) => this.target(target, { internal: false });
+
 
   private updateTransition(key:string, currentTranstionConfig, targetObject) {
     let transitionConfig = currentTranstionConfig;
@@ -222,8 +257,8 @@ class InvokeBuilder extends BaseMachineConfigBuilder {
   public then = this.onDone;
 
   public onError = this.createScopedTransitionBuilder('onError');
-  public onException = this.onDone;
-  public catch = this.onDone;
+  public onException = this.onError;
+  public catch = this.onError;
 
   private createScopedTransitionBuilder(scopeName: string) {
     const transitionBuilder = (eventName: string) => new TransitionBuilder({
