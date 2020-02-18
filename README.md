@@ -1,16 +1,18 @@
-# ⚠️ Under Active Developement ⚠️
-( This is a "dirty" repository for a future PR on davidkpiano/xstate, I'm working on this repo, and once every is done, I'll archive this repo and create the PR )
+## Why this package ?
+Configuring a state machine using the Object Configuration Pattern is straightfoward.
+But there is some flaws to it:
+- it lacks to provide meaning to the code, therefore, regression can and will happen.
+- it's hard to understand, JSON is very different and the reading pattern is not easy.
 
-🙏 **Please, Sumbmit your x-state machine configurations in the issues tab**
-
-🤔 Why ? For several reasons:
-
-I will create a test case for them
-And try to recreate them using the xstate-builder
-
-Because I need to add as much test as possible for the V1.
-
-Detect improvement that have to be done to the builder API.
+Using the Builder Pattern to create this object is what we need.
+This abstraction can
+- Autocomplete, Dynamic Typing and improved API discovery 👌.
+- Easy to compose with any JS code to help you configure your machine.
+- Ability to quickly have a clear view of all the different states of the machine.
+- Write the same machine with fewer lines of code.
+- Increase Maintainability: Easier to read and understand ( because of the fluent API ).
+- Ability to organize the code in a way that makes the more sense to you, and not to the machine.
+- Integrates with all the js/ts tools you already have
 
 ## What has been Done ✅
 
