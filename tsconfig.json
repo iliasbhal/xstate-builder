@@ -1,9 +1,27 @@
 {
-  "extends": "./tsconfig.common.json",
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "lib"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts"]
+    "outDir": "lib",
+    "composite": true,
+    "declarationMap": true,
+    "module": "commonjs",
+    "target": "es2018",
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": false,
+    "importHelpers": true,
+    "noUnusedLocals": false,
+    "alwaysStrict": false,
+    "noImplicitAny": false,
+    "strictFunctionTypes": false,
+    "strictNullChecks": false,
+    "removeComments": true,
+    "types": ["jest", "node"],
+    "lib": ["DOM", "ESNext"]
+  }
 }

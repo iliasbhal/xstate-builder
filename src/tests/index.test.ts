@@ -1,24 +1,42 @@
 // tslint:disable
 
 import { expect } from 'chai';
+import * as xState from 'xstate';
 import Machine from '../index';
-
+import { StateBuilder } from '../lib/stateBuilder';
 describe('test state machine', () => {
 
-  // TODO: state names should be minifiable.
-  // TODO add machine.defineNode .defineTransition etc etc
-  //      and machine.useNode useTransition etc etc
-  // TODO: ability to use an ...args as StateBuilders[] 
-    // for .children .describe
-    // for .child 
+  it('should not break' , () => {
+    const dumbMachine = Machine.Builder((machine) => {})
+    expect(dumbMachine.getConfig()).to.deep.equal({});
+  });
 
-  // TODO: when using a referance as target, we need to automaticly
-  // append "#" or "." ie: .target when it's a child states
-  // should implement ".closest()" method to generate the target id.
+  it('should be able to define a machineId' , () => {
+    const machineConfig = Machine.Builder((machine) => {
+      machine.id('test-state');
+    });
+    expect(machineConfig.getConfig()).to.deep.equal({
+      id: 'test-state',
+    });
+  });
 
-  // external() internal() aren't working;
+  it('should be able to define a state node and automatically detect initial state' , () => {
+    const machineConfig = Machine.Builder((machine) => {
+      machine.id('test-state');
+      machine.atomic('test-node');
+    });
+    expect(machineConfig.getConfig()).to.deep.equal({
+      id: 'test-state',
+      "initial": "test-node",
+      "states": {
+        "test-node": {
+          "type": "atomic",
+        },
+      },
+    });
+  });
 
-  it('should automaticaly recalculate target id for nested states', () => {
+  it('should automatically recalculate target id for states nested after creation', () => {
     const machineConfig = Machine.Builder((machine) => {
       machine.id('test-state');
 
@@ -34,8 +52,7 @@ describe('test state machine', () => {
       machine.on('DOUBLE_CLICK').target(child1);
 
       internal1.on('TAP').target(internal2);
-
-    })
+    });
 
     expect(machineConfig.getConfig()).to.deep.equal({
       "id": "test-state",
@@ -67,6 +84,96 @@ describe('test state machine', () => {
     })
   })
 
+  it('should automatically concatenate attribute of same type when called one after the other', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      const initial = machine.state('initial');
+      initial.on("NEWTODO.COMMIT")
+        .if('IS_VALID')
+          .assign({ isValid: true })
+          .then('persist')
+          .then('log')
+        .if('IS_INVALID')
+          .assign({ isValid: false })
+          .then(['persist', 'log']);
+    });
+
+    expect(machineConfig.getConfig()).to.deep.equal({
+      "initial": "initial",
+      "states": {
+        "initial": {
+          "type": "atomic",
+          "on": {
+            "NEWTODO.COMMIT": [
+              {
+                "cond": "IS_VALID",
+                "actions": [
+                  xState.assign({  "isValid": true }),
+                  "persist",
+                  "log"
+                ]
+              },
+              {
+                "cond": "IS_INVALID",
+                "actions": [
+                  xState.assign({  "isValid": false }),
+                  "persist",
+                  "log"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    });
+  })
+
+  it('should be able to apply same transition on several events', () => {
+    const machineConfig = Machine.Builder((machine) => {
+      const inital = machine.state('initial');
+      const final = machine.state('final');
+      inital.onEach(['A_EVENT', 'OTHER_EVENT'])
+        .target(final)
+        .actions(action => [
+          action.assign({ completed: false }),
+        ]);
+    });
+
+    expect(machineConfig.getConfig()).to.deep.equal({
+      "initial": "initial",
+      "states": {
+        "initial": {
+          "type": "atomic",
+          "on": {
+            "A_EVENT": {
+              "target": "final",
+              "actions": [
+                {
+                  "type": "xstate.assign",
+                  "assignment": {
+                    "completed": false
+                  }
+                }
+              ]
+            },
+            "OTHER_EVENT": {
+              "target": "final",
+              "actions": [
+                {
+                  "type": "xstate.assign",
+                  "assignment": {
+                    "completed": false
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "final": {
+          "type": "atomic"
+        }
+      }
+    });
+  })
   it('should be able to chain cond and action', () => {
     const customGuard = ctx => ctx.completed;
     const machineConfig = Machine.Builder((machine) => {

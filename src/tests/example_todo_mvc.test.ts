@@ -1,15 +1,13 @@
-// tslint:disable
-
 import { expect } from 'chai';
+import { assign, sendParent, spawn } from 'xstate';
 import Machine from '../index';
-import { assign, spawn, sendParent } from 'xstate';
 
 it('should be able to reproduce TodoMVC example' , () => {
   const todosImpl = {
     createTodo: (title) => {
       return {
         id: Math.random().toString(),
-        title: title,
+        title,
         completed: false
       }
     },
@@ -80,19 +78,12 @@ it('should be able to reproduce TodoMVC example' , () => {
       const completed = reading.state('completed');
       reading.history('hist');
       
-      completed
-        .on('SET_ACTIVE')
-          .target(pending)
-          .actions(action => [
-            action.assign({ completed: false }),
-            action.sendParent(todosImpl.commitTodoEvent),
-          ])
-        .on('TOGGLE_COMPLETE')
-          .target(pending)
-          .actions(action => [
-            action.assign({ completed: false }),
-            action.sendParent(todosImpl.commitTodoEvent),
-          ])
+      completed.onEach(['SET_ACTIVE', 'TOGGLE_COMPLETE'])
+        .target(pending)
+        .actions(action => [
+          action.assign({ completed: false }),
+          action.sendParent(todosImpl.commitTodoEvent),
+        ]);
         
       unknown
         .cond(todosImpl.isCompletedGuard).target(completed)
@@ -141,50 +132,36 @@ it('should be able to reproduce TodoMVC example' , () => {
 
     const initializing = machine.transient('initializing');
     const all = machine.state('all');
-    const active = machine.state('active');
-    const completed = machine.state('completed');
+    machine.state('active');
+    machine.state('completed');
 
     initializing.target(all)
       .onEntry(t => t.assign({
         todos: todosImpl.initializeTodo,
       }));
 
-    machine.on("SHOW.all").target('.all');
+    machine.on("SHOW.all").target(all);
     machine.on("SHOW.active").target('.active');
     machine.on("SHOW.completed").target('.completed');
 
-    machine.on("NEWTODO.CHANGE").assign({
-      todo: todosImpl.getValue,
-    });
+    machine.on("NEWTODO.CHANGE")
+      .assign({ todo: todosImpl.getValue });
 
     machine.on("NEWTODO.COMMIT")
       .if(todosImpl.isValid)
-      .actions((action) =>  [
-        action.assign({
-          todo: "", // clear todo
-          todos: todosImpl.newCommitTodo,
-        }),
-        "persist"
-      ]);
+      .assign({ todo: "", todos: todosImpl.newCommitTodo })
+      .then('persist');
 
     machine.on("TODO.COMMIT")
-      .actions((action) =>  [
-        action.assign({
-          todos: todosImpl.todoCommit,
-        }),
-        "persist"
-      ]);
+      .assign({ todos: todosImpl.todoCommit })
+      .then("persist");
 
     machine.on("TODO.DELETE")
-      .actions((action) => [
-        action.assign({
-          todos: todosImpl.deleteTodo,
-        }),
-        "persist"
-      ]);
+      .assign({ todos: todosImpl.deleteTodo })
+      .then("persist");
 
-    machine.on("MARK.completed").actions(() => todosImpl.markCompleted);
-    machine.on("MARK.active").actions(() => todosImpl.setActive);
+    machine.on("MARK.completed").action(todosImpl.markCompleted);
+    machine.on("MARK.active").action(todosImpl.setActive);
 
     machine.on("CLEAR_COMPLETED").assign({
       todos: todosImpl.clearCompleted,

@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import { assign, sendParent, spawn, Spawnable } from 'xstate';
 import Machine from '../index';
 
-
 it('should be able to reproduce reddit example' , () => {
 
   function createSubredditMachine(subredditName) : any {
