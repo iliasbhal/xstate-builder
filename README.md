@@ -13,7 +13,7 @@ This abstraction can
 - Increase Maintainability: Easier to read and understand ( because of the fluent API ).
 - Ability to organize the code in a way that makes the more sense to you, and not to the machine.
 - Integrates with all the js/ts tools you already have
-
+ 
 ## What has been Done ✅
 
 - [x] support for custom actions
@@ -70,29 +70,41 @@ Example 2: Simple State With Event Handler
 
 ```ts
 const machineConfig = Machine.Builder(state => {
-  state.atomic('atomic-node')
-    .on('MOUSE_DOWN')
-        .cond('GUARD').action('ACTION')
-    .on('MOUSE_UP')
-        .cond('GUARD2').action('ACTION2')
+  state.atomic('initialState')
+    .onEach(['TAP', 'CLICK', 'LONGPRESS'])
+      .if('IS_ACTIVE').do('SET_INACTIVE')
+      .if('IS_INACTIVE').do('SET_ACTIVE')
 })
 
 // SAME AS:
 
 const machineConfig = {
-  initial: 'atomic-node',
+  initial: 'initialState',
   states: {
-    'atomic-node': {
+    'initialState': {
       type: 'atomic',
       on: {
-        MOUSE_DOWN: {
-          cond: 'GUARD',
-          action: 'ACTION',
-        },
-        MOUSE_UP: {
-          cond: 'GUARD2',
-          action: 'ACTION2',
-        },
+        TAP: [{
+          cond: 'IS_ACTIVE',
+          action: 'SET_INACTIVE',
+        }, {
+          cond: 'IS_INACTIVE',
+          action: 'SET_ACTIVE',
+        }],
+        CLICK: [{
+          cond: 'IS_ACTIVE',
+          action: 'SET_INACTIVE',
+        }, {
+          cond: 'IS_INACTIVE',
+          action: 'SET_ACTIVE',
+        }],
+        LONGPRESS: [{
+          cond: 'IS_ACTIVE',
+          action: 'SET_INACTIVE',
+        }, {
+          cond: 'IS_INACTIVE',
+          action: 'SET_ACTIVE',
+        }],
       },
     },
   },
