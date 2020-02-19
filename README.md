@@ -29,13 +29,10 @@ This abstraction can
 Example: Sequence Pattern:
 
 ```ts
-const machineConfig = Machine.Builder(state => {
-  const node1 = state.atomic('node-1');
-  const node2 = state.atomic('node-2');
-  const node3 = state.atomic('node-3');
-
-  [node1, node2, node3].forEach((state, index, nodes) => {
-    state.on('NEXT').target(nodes[index + 1] || nodes[0])
+const machineConfig = Machine.Builder(machine => {
+  const nodes = ['node-1', 'node-2', 'node-3', 'node-4];
+  machine.states(nodes).forEach((state, index, nodes) => {
+   state.on('NEXT').target(nodes[index + 1] || nodes[0])
   })
 })
 
@@ -57,6 +54,12 @@ const machineConfig = {
       },
     },
     'node-3': {
+      type: 'atomic',
+      on: {
+        NEXT: 'node-4',
+      },
+    },
+    'node-4': {
       type: 'atomic',
       on: {
         NEXT: 'node-1',
