@@ -23,7 +23,12 @@ const machineConfig = Machine.Builder(machine => {
   const nodes = ['node-1', 'node-2', 'node-3', 'node-4];
   
   machine.states(nodes).forEach((state, index, nodes) => {
-   state.on('NEXT').target(nodes[index + 1] || nodes[0])
+   const nextTarget = nodes[index + 1] || nodes[0];
+   const prevTarget = nodes[index - 1] || nodes[nodes.length - 1];
+   
+   state.on('NEXT').target(nextTarget)
+    .on('PREVIOUS').target(prevTarget);
+   
   })
 })
 
@@ -36,24 +41,28 @@ const machineConfig = {
       type: 'atomic',
       on: {
         NEXT: 'node-2',
+        PREVIOUS: 'node-4',
       },
     },
     'node-2': {
       type: 'atomic',
       on: {
         NEXT: 'node-3',
+        PREVIOUS: 'node-1',
       },
     },
     'node-3': {
       type: 'atomic',
       on: {
         NEXT: 'node-4',
+        PREVIOUS: 'node-2',
       },
     },
     'node-4': {
       type: 'atomic',
       on: {
         NEXT: 'node-1',
+        PREVIOUS: 'node-3',
       },
     },
   },
