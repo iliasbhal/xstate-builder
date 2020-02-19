@@ -13,16 +13,6 @@ This abstraction can
 - Increase Maintainability: Easier to read and understand ( because of the fluent API ).
 - Ability to organize the code in a way that makes the more sense to you, and not to the machine.
 - Integrates with all the js/ts tools you already have
- 
-## What has been Done ✅
-
-- [x] support for custom actions
-- [x] support for activities
-- [x] automatic intial state definition
-- [x] support for compound states
-- [x] support for parallel state
-- [x] ability to use xstate object
-- [ ] ... a lot of other things
 
 ## Examples
 
@@ -31,6 +21,7 @@ Example: Sequence Pattern:
 ```ts
 const machineConfig = Machine.Builder(machine => {
   const nodes = ['node-1', 'node-2', 'node-3', 'node-4];
+  
   machine.states(nodes).forEach((state, index, nodes) => {
    state.on('NEXT').target(nodes[index + 1] || nodes[0])
   })
@@ -148,3 +139,13 @@ const machineConfig = {
   },
 }
 ```
+
+## What has been Done ✅
+
+- [x] support for custom actions
+- [x] support for activities
+- [x] automatic intial state definition
+- [x] support for compound states
+- [x] support for parallel state
+- [x] ability to use xstate object
+- [ ] ... a lot of other things
