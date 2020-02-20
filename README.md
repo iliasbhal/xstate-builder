@@ -2,7 +2,9 @@
 Configuring a state machine using the Object Configuration Pattern is straightfoward.
 But there is some flaws to it:
 - it lacks to provide meaning to the code, therefore, regression can and will happen.
-- it's hard to understand, JSON is very different and the reading pattern is not easy.
+- it's long to read, reading JSON is very different from code reading.
+- composition is hard to achieve
+- techincal debt is hight.
 
 Using the Builder Pattern to create this object is what we need.
 This abstraction can
