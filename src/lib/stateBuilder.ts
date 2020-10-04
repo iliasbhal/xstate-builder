@@ -4,8 +4,8 @@ import { HistoryBuilder } from './historyBuilder';
 import { InvokeBuilder } from './invokeBuilder';
 import { TransitionBuilder } from './transitionBuilder';
 
-export class StateBuilder extends BaseMachineBuilder {
-  public _id: string;
+export class StateBuilder<T extends string | string> extends BaseMachineBuilder {
+  public _id: T;
 
   public data = this.context;
   public withContext = this.context;
@@ -23,7 +23,7 @@ export class StateBuilder extends BaseMachineBuilder {
   public require = this.invoke;
   public import = this.invoke;
 
-  constructor(id, ...args) {
+  constructor(id: T, ...args) {
     super(...args);
     this._id = id;
   }
@@ -32,7 +32,7 @@ export class StateBuilder extends BaseMachineBuilder {
     return xState.Machine(this.getConfig());
   }
 
-  public id = (id: string) => {
+  public id = (id: T) => {
     this._id = id;
     this.updateStateProperty('id', id);
   }
@@ -58,7 +58,7 @@ export class StateBuilder extends BaseMachineBuilder {
       type: !isParallel ? 'compound' : undefined,
     });
 
-    let childStateConfig = {
+    let childStateConfig: any = {
       states: {}, 
     };
 
@@ -71,6 +71,12 @@ export class StateBuilder extends BaseMachineBuilder {
     describeFn(childStateBuilder);
 
     this.assignKeyConfig('states', childStateConfig.states);
+
+    const shouldUpdateInitialState = !isParallel && (!!childStateConfig.initial && !currentConfig.initial);
+    if (shouldUpdateInitialState) {
+      this.assignConfig({'initial': childStateConfig.initial});
+    }
+
     return this;
   }
 
@@ -98,10 +104,10 @@ export class StateBuilder extends BaseMachineBuilder {
     return chainMethods || this.getChainMethods();
   }
 
-  public on(eventName: string, ...args) : TransitionBuilder<any, StateBuilder> {
+  public on(eventName: string, ...args) : TransitionBuilder<any, StateBuilder<T>> {
     const currentConfig = this.getConfig() || {};
 
-    const transitionBuilder = new TransitionBuilder<any, StateBuilder>({
+    const transitionBuilder = new TransitionBuilder<any, StateBuilder<T>>({
       parent: this,
       getConfig: () => {
         if (!currentConfig.on) {
@@ -134,7 +140,7 @@ export class StateBuilder extends BaseMachineBuilder {
   public onEach(eventNames: string[], ...args) {
     const currentConfig = this.getConfig() || {};
 
-    const transitionBuilder = new TransitionBuilder<any, StateBuilder>({
+    const transitionBuilder = new TransitionBuilder<any, StateBuilder<T>>({
       parent: this,
       getConfig: () => {
         if (!currentConfig.on) {
@@ -165,7 +171,7 @@ export class StateBuilder extends BaseMachineBuilder {
     return transitionBuilder;
   }
 
-  public node(stateName: string, ...args) : StateBuilder {
+  public node<NAME extends string>(stateName: NAME, ...args) : StateBuilder<NAME> {
     const currentConfig = this.getConfig();
 
     if (!currentConfig.initial && currentConfig.type !== 'parallel') {
@@ -241,18 +247,23 @@ export class StateBuilder extends BaseMachineBuilder {
     return invokeBuilder;
   }
 
-  public addChildState(stateNode: StateBuilder) {
+  public addChildState(stateNode: StateBuilder<string>) {
     const thisConfig = this.getConfig();
     const childConfig = stateNode.getConfig();
     stateNode.setConfig(undefined)
 
     const shouldBeCompound = thisConfig.type !== 'parallel'
-    const newAssignConfig = { 
+    const newAssignConfig : any = { 
       states: { 
         [stateNode._id]: childConfig 
       }
     };
 
+    
+    if (!thisConfig.initial && thisConfig.type !== 'parallel') {
+      newAssignConfig.initial = stateNode._id;
+    }
+    
     stateNode.reconstruct({
       parent: this,
       getConfig: () => newAssignConfig.states[stateNode._id],
@@ -270,26 +281,35 @@ export class StateBuilder extends BaseMachineBuilder {
     return this;
   }
 
-  public atomic(stateName: any, ...args) { return this.updateOrCreateState(stateName, 'atomic', ...args); }
-  public compound(stateName: any, ...args) { return this.updateOrCreateState(stateName, 'compound', ...args); }
-  public parallel(stateName: any, ...args) { return this.updateOrCreateState(stateName,'parallel', ...args); }
-  public final(stateName: any, ...args) { return this.updateOrCreateState(stateName,'final', ...args); }
-  public transient(stateName: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
-  public switch(stateName: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
-  public choice(stateName: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
+  public initial<NAME extends string>(stateNode: StateBuilder<NAME>) {
+    this.assignConfig({ initial: stateNode._id });
+  };
 
-  public states = (children: Array<string | StateBuilder>, ...args) => {
-    return children.map((child) => {
-      if (child instanceof StateBuilder) {
-        this.addChildState(child);
-        return child;
-      }
-      
-      return this.atomic(child, ...args);
-    })
+  public atomic(stateName?: T | any, ...args) { return this.updateOrCreateState(stateName, 'atomic', ...args); }
+  public compound(stateName?: any, ...args) { return this.updateOrCreateState(stateName, 'compound', ...args); }
+  public parallel(stateName?: any, ...args) { return this.updateOrCreateState(stateName,'parallel', ...args); }
+  public final(stateName?: any, ...args) { return this.updateOrCreateState(stateName,'final', ...args); }
+  public transient(stateName?: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
+  public switch(stateName?: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
+  public choice(stateName?: any, ...args) { return this.updateOrCreateState(stateName,'atomic', ...args).on('', ''); }
+
+  public states<T extends string>(stateName: T[] | T, ...otherStatesNames: T[]) : Record<T, StateBuilder<T>> & StateBuilder<T | string>[] {
+    const allDefinedStates = [
+      ...(Array.isArray(stateName) ? stateName : [stateName]),
+      ...otherStatesNames,
+    ];
+
+    const states = [] as Record<T, StateBuilder<T>> & StateBuilder<T | string>[];
+    allDefinedStates.forEach((state: string) => {
+      const newState = this.atomic(state);
+      states[state] = newState;
+      states.push(newState);
+    });
+
+    return states;
   }
 
-  public updateOrCreateState(stateName: any, type: string, ...args) {
+  private updateOrCreateState(stateName: any, type: string, ...args) : StateBuilder<string> {
     const isChildrenFn = typeof stateName === 'function' && ['parallel', 'compound'].includes(type);
     if (isChildrenFn) {
       this.updateStateProperty('type', type)

@@ -1,5 +1,5 @@
 {
-  "name": "xstate-builder",
+  "name": "builder",
   "version": "0.0.2",
   "description": "Use A Fluent Builder To Generate Your X-State Configuration",
   "license": "MIT",
@@ -15,22 +15,26 @@
     "fix:md": "prettier --write --ignore-path .gitignore './**/*.md'",
     "fix:packageJson": "sort-package-json package.json && prettier --write package.json",
     "fix:ts": "prettier --ignore-path .gitignore --parser typescript --write './**/*.ts' && tslint --fix --project tsconfig.lint.json",
-    "start": "tsc -b -w",
     "test": "jest",
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "react-diagrams": "^1.0.1",
     "xstate": "^4.7.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.23",
+    "@testing-library/react": "^10.4.8",
+    "@types/jest": "^24.0.25",
     "@types/node": "^11.9.5",
+    "@types/react": "^16.9.45",
+    "@xstate/test": "^0.4.0",
     "chai": "^4.2.0",
     "concurrently": "^4.1.0",
     "husky": "^1.3.1",
     "jest": "^24.1.0",
     "lint-staged": "^8.1.4",
     "prettier": "^1.16.4",
+    "react-dom": "^16.13.1",
     "rimraf": "^2.6.3",
     "sort-package-json": "^1.19.0",
     "ts-jest": "^24.0.0",

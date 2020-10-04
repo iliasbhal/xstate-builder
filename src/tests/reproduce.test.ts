@@ -38,8 +38,8 @@ it('should be able to reproduce async sequence' , () => {
         })
       );
   });
-
-  const expectedConfig = {
+  
+  expect(machineConfig.getConfig()).to.deep.equal({
     id: 'friends',
     context: { userId: 42, user: undefined, friends: undefined },
     initial: 'gettingUser',
@@ -72,9 +72,7 @@ it('should be able to reproduce async sequence' , () => {
         type: 'final'
       }
     }
-  }
-  
-  expect(machineConfig.getConfig()).to.deep.equal(expectedConfig)
+  });
 
   function getUserInfo(context) {
     return fetch('/api/users/${context.userId}').then(response =>
@@ -96,24 +94,22 @@ it('should be able to reproduce async sequence' , () => {
 
 it('should be able to reproduce basic sequence' , () => {
   // example found on: https://xstate.js.org/docs/patterns/sequence.html#sequence
-  const machineConfig = Machine.Builder((machine) => {
-    machine.id('step');
-
+  const machineConfig = Machine.Builder('step', (machine) => {
     machine.states(['one', 'two', 'three'])
-      .forEach((step, i, steps) => {
+      .forEach((state, i, states) => {
         const isFirst = i === 0;
-        const isLast = i === steps.length - 1;
+        const isLast = i === states.length - 1;
 
         if (!isFirst) {
-          step.on('PREV').target(steps[i - 1])
+          state.on('PREV').target(states[i - 1])
         } 
 
         if (!isLast) {
-          step.on('NEXT').target(steps[i + 1])
+          state.on('NEXT').target(states[i + 1])
         }
 
         if (isLast) {
-          step.final();
+          state.final();
         }
       })
   });

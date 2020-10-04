@@ -2,12 +2,12 @@ import * as xState from 'xstate';
 import { BaseMachineBuilder } from './baseMachineBuilder';
 import { StateBuilder } from './stateBuilder';
 
-type Condition<Context> = ((ctx: Context, event: xState.AnyEventObject ) => boolean) | string;
+type Condition<Context> = ((ctx: Context, event: xState.AnyEventObject ) => boolean) | string | { type: string, [key: string]: any};
 
 type ActionObject<Context> = xState.ActionObject<Context, xState.AnyEventObject>;
 type ValidActions<Context> = string | string[] | Partial<ActionObject<Context>> | Array<Partial<ActionObject<Context>>>;
 type Action<Context> = ((actions?: typeof xState.actions) => ValidActions<Context>) | ValidActions<Context>;
-type Target = (StateBuilder | string) | Array<StateBuilder | string>
+type Target = (StateBuilder<string> | string) | Array<StateBuilder<string> | string>
 type TargetOptions = { internal: true, external?: false | undefined }
   | { internal?: false | undefined, external: true }
   | { internal?: false | undefined, external?: false | undefined }

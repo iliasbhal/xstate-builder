@@ -3,7 +3,6 @@
 import { expect } from 'chai';
 import * as xState from 'xstate';
 import Machine from '../index';
-import { StateBuilder } from '../lib/stateBuilder';
 describe('test state machine', () => {
 
   it('should not break' , () => {
@@ -291,6 +290,7 @@ describe('test state machine', () => {
       "states": {
         "test-node": {
           "type": "compound",
+          "initial": "2nd-child",
           "states": {
             "test-node-child": {
               "type": "atomic",
@@ -403,6 +403,14 @@ describe('test state machine', () => {
       });
     });
 
+    const anothnerMachineConfig =  Machine.Builder((state) => {
+      state.states('node-1', 'node-2', 'node-3')
+        .forEach((state, index, nodes) => {
+          state.on('NEXT').target(nodes[index + 1] || nodes[0]);
+        });
+    })
+
+    expect(anothnerMachineConfig.getConfig()).to.deep.equal(machineConfig.getConfig());
     expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'node-1',
       'states': {
@@ -442,6 +450,7 @@ describe('test state machine', () => {
       'states': {
         'atomic-node': {
           'type': 'compound',
+          "initial": "CHILD_1",
           'states': {
             'CHILD_1': {
               'type': 'atomic',
@@ -512,13 +521,22 @@ describe('test state machine', () => {
     });
   });
 
-  it('should let use this keyword with anonymous functions', () => {
+  it('should let use this keyword with anonymous/names functions', () => {
     const machineConfig = Machine.Builder((state) => {
       state.atomic('atomic-node', function () {
         this.on('CLICK').target('SOMETHING');
       });
     });
 
+    const machineConfig2 = Machine.Builder((state) => {
+      state.atomic('atomic-node', handleClick);
+
+      function handleClick() {
+        this.on('CLICK').target('SOMETHING');
+      }
+    });
+
+    expect(machineConfig2.getConfig()).to.deep.equal(machineConfig.getConfig())
     expect(machineConfig.getConfig()).to.deep.equal({
       'initial': 'atomic-node',
       'states': {
