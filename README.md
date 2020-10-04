@@ -159,4 +159,5 @@ const machineConfig = {
 - [x] support for compound states
 - [x] support for parallel state
 - [x] ability to use xstate object
+- [ ] add remove functions
 - [ ] ... a lot of other things
