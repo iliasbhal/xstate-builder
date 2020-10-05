@@ -1,6 +1,6 @@
 {
-  "name": "builder",
-  "version": "0.0.2",
+  "name": "xstate-builder",
+  "version": "0.0.4",
   "description": "Use A Fluent Builder To Generate Your X-State Configuration",
   "license": "MIT",
   "author": "ilias <ilias.bhal@gmail.com>",
