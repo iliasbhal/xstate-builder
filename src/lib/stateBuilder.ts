@@ -200,6 +200,30 @@ export class StateBuilder<T extends string | string> extends BaseMachineBuilder 
     return stateBuilder;
   }
 
+  public deleteNode(nodeName: string) {
+    const currentConfig = this.getConfig();
+    const nodeToDelete = currentConfig.states[nodeName];
+
+    if (!nodeToDelete) {
+      return;
+    }
+
+    delete currentConfig.states[nodeName];
+
+    const wasInitialState = currentConfig.initial === nodeName;
+    if (wasInitialState) {
+      delete currentConfig.initial;
+    }
+
+    const hasOtherStates = Object.keys(currentConfig.states).length > 0;
+    if (!hasOtherStates) {
+      delete currentConfig.states;
+    }
+
+    this.setConfig(currentConfig);
+    return nodeToDelete;
+  }
+
   public history(stateName, ...args) : HistoryBuilder {
     const historyConfig = {
       [stateName]: {

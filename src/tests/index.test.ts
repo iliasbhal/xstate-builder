@@ -35,6 +35,35 @@ describe('test state machine', () => {
     });
   });
 
+  it('should be able to remove state nodes' , () => {
+    const machineConfig = Machine.Builder((machine) => {
+      machine.id('test-state');
+      machine.atomic('test-node');
+
+      machine.deleteNode('test-node');
+    });
+    expect(machineConfig.getConfig()).to.deep.equal({
+      id: 'test-state',
+    });
+
+    const machineConfig2 = Machine.Builder((machine) => {
+      machine.id('test-state');
+      machine.atomic('test-node');
+      machine.deleteNode('test-node');
+      
+      machine.atomic('test-node-2');
+    });
+    expect(machineConfig2.getConfig()).to.deep.equal({
+      id: 'test-state',
+      "initial": "test-node-2",
+      "states": {
+        "test-node-2": {
+          "type": "atomic",
+        },
+      },
+    });
+  });
+
   it('should automatically recalculate target id for states nested after creation', () => {
     const machineConfig = Machine.Builder((machine) => {
       machine.id('test-state');
