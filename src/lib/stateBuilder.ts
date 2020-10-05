@@ -137,6 +137,20 @@ export class StateBuilder<T extends string | string> extends BaseMachineBuilder 
     return transitionBuilder;
   }
 
+  removeEventHandler(eventName: string) {
+    const currentConfig = this.getConfig()
+    if (!currentConfig.on) {
+      return
+    }
+
+    delete currentConfig.on[eventName];
+
+    const hasOtherEventHandlers = Object.keys(currentConfig.on).length > 0;
+    if (!hasOtherEventHandlers) {
+      delete currentConfig.on;
+    }
+  }
+
   public onEach(eventNames: string[], ...args) {
     const currentConfig = this.getConfig() || {};
 

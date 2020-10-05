@@ -36,24 +36,24 @@ describe('test state machine', () => {
   });
 
   it('should be able to remove state nodes' , () => {
-    const machineConfig = Machine.Builder((machine) => {
+    const machine = Machine.Builder((machine) => {
       machine.id('test-state');
       machine.atomic('test-node');
-
-      machine.deleteNode('test-node');
     });
-    expect(machineConfig.getConfig()).to.deep.equal({
+    machine.deleteNode('test-node');
+    expect(machine.getConfig()).to.deep.equal({
       id: 'test-state',
     });
 
-    const machineConfig2 = Machine.Builder((machine) => {
+    const machine2 = Machine.Builder((machine) => {
       machine.id('test-state');
       machine.atomic('test-node');
       machine.deleteNode('test-node');
       
       machine.atomic('test-node-2');
     });
-    expect(machineConfig2.getConfig()).to.deep.equal({
+
+    expect(machine2.getConfig()).to.deep.equal({
       id: 'test-state',
       "initial": "test-node-2",
       "states": {
@@ -577,6 +577,46 @@ describe('test state machine', () => {
         },
       },
     });
+  });
+
+  it('can delete event handlers', () => {
+    const machine = Machine.Builder((state) => {
+      const atomic = state.atomic('atomic-node')
+      atomic.on('CLICK').target('SOMETHING');
+
+      atomic.removeEventHandler('CLICK')
+    });
+
+    machine.removeEventHandler('CLICK');
+
+    expect(machine.getConfig()).to.deep.equal({
+      'initial': 'atomic-node',
+      'states': {
+        'atomic-node': {
+          type: 'atomic',
+        },
+      },
+    })
+
+    const machine2 = Machine.Builder((state) => {
+      const atomic = state.atomic('atomic-node')
+      atomic.on('CLICK').target('SOMETHING');
+      atomic.on('DOUBLE-CLICK').target('SOMETHING-ELSE');
+
+      atomic.removeEventHandler('CLICK')
+    });
+
+    expect(machine2.getConfig()).to.deep.equal({
+      'initial': 'atomic-node',
+      'states': {
+        'atomic-node': {
+          type: 'atomic',
+          'on': {
+            'DOUBLE-CLICK': 'SOMETHING-ELSE',
+          },
+        },
+      },
+    })
   });
 
   it('should let use state reference as target', () => {
