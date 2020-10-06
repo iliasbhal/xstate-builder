@@ -28,10 +28,6 @@ export class StateBuilder<T extends string | string> extends BaseMachineBuilder 
     this._id = id;
   }
 
-  public getMachine() {
-    return xState.Machine(this.getConfig());
-  }
-
   public id = (id: T) => {
     this._id = id;
     this.updateStateProperty('id', id);
