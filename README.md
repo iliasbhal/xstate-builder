@@ -1,4 +1,9 @@
-## Why this package ?
+## Why this package?
+
+> The Builder Pattern decouples the creation of the object from the object itself.
+The main idea behind is that an object does not have to be responsible for its own creation.
+The correct and valid assembly of a complex object may be a complicated task in itself, so this task can be delegated to another class.
+
 Configuring a state machine using the Object Configuration Pattern is straightfoward.
 But there is some flaws to it:
 - it lacks to provide meaning to the code, therefore, regression can and will happen.
@@ -6,8 +11,8 @@ But there is some flaws to it:
 - composition is hard to achieve
 - techincal debt is hight.
 
-Using the Builder Pattern to create this object is what we need.
-This abstraction can
+
+## What can this do for me?
 - Autocomplete, Dynamic Typing and improved API discovery 👌.
 - Easy to compose with any JS code to help you configure your machine.
 - Ability to quickly have a clear view of all the different states of the machine.
