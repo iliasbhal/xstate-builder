@@ -1,3 +1,8 @@
+## Under Developement
+The package works fine, as seen on the tests. But the API is not stable yet and will change in the future.
+
+Don't use it yet :pray:
+
 ## Why this package?
 
 > The Builder Pattern decouples the creation of the object from the object itself.
