@@ -32,7 +32,7 @@ Example: Sequence Pattern:
 
 ```ts
 const machineConfig = Machine.Builder(machine => {
-  const nodes = ['node-1', 'node-2', 'node-3', 'node-4];
+  const nodes = ['node-1', 'node-2', 'node-3', 'node-4'];
   
   machine.states(nodes).forEach((state, index, nodes) => {
    const nextTarget = nodes[index + 1] || nodes[0];
